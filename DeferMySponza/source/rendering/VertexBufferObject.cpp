@@ -43,7 +43,7 @@ void VertexBufferObject<T>::setData(const T *data) {
 #pragma region Static Methods
 
 template <typename T>
-void VertexBufferObject<T>::SetActive(const GLenum target) {
+void VertexBufferObject<T>::Reset(const GLenum target) {
 	glBindBuffer(target, 0);
 }
 
@@ -67,7 +67,17 @@ void VertexBufferObject<T>::BufferData() {
 		*m_data.size() * sizeof(T),
 		*m_data.data(),
 		m_usage);
-	VertexBufferObject::SetActive(m_target);
+	VertexBufferObject::Reset(m_target);
+}
+
+template <typename T>
+void VertexBufferObject<T>::BufferSubData(GLintptr offset) {
+	this->SetActive();
+	glBufferSubData(m_target,
+		offset,
+		*m_data.size() * sizeof(T),
+		*m_data.data());
+	VertexBufferObject::Reset(m_target);
 }
 
 #pragma endregion

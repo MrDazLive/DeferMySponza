@@ -13,6 +13,7 @@ public:
 	GLuint getAttributeCount() const;
 #pragma endregion
 #pragma region Static Methods
+	static void Reset();
 	static void SetActive(const VertexArrayObject *vao);
 #pragma endregion
 #pragma region Non-Static Methods

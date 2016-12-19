@@ -17,12 +17,14 @@ public:
 	void setData(const T *data);
 #pragma endregion
 #pragma region Static Methods
-	static void SetActive(const GLenum target);
+	static void Reset(const GLenum target);
 	static void SetActive(const VertexBufferObject *vbo);
 #pragma endregion
 #pragma region Non-Static Methods
 	void SetActive();
 	void BufferData();
+	void BufferSubData(GLintptr offset = 0);
+	void BindRange(GLuint index = 0, GLintptr offset = 0);
 #pragma endregion
 private:
 	GLuint m_id;

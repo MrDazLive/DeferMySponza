@@ -26,8 +26,12 @@ GLuint VertexArrayObject::getAttributeCount() const {
 #pragma endregion
 #pragma region Static Methods
 
+void VertexArrayObject::Reset() {
+	glBindVertexArray(0);
+}
+
 void VertexArrayObject::SetActive(const VertexArrayObject *vao) {
-	glBindVertexArray((vao != nullptr) ? vao->getID() : 0);
+	glBindVertexArray(vao->getID());
 }
 
 #pragma endregion
