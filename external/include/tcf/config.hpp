@@ -1,0 +1,64 @@
+/**
+ * @file
+ * @author  Tyrone Davison <t.p.davison@tees.ac.uk>
+ * @date    September 2016
+ * @version 2.16.0
+ *
+ *
+ * @section DESCRIPTION
+ *
+ * Compilation configuration settings for the TCF API.
+ *
+ *
+ * @section LICENSE
+ *
+ * Copyright (c) 2016 Tyrone Davison <t.p.davison@tees.ac.uk>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+#pragma once
+#ifndef __TCF_CONFIG_2__
+#define __TCF_CONFIG_2__
+
+#define TCF_MAJOR_VERSION 2
+#define TCF_MINOR_VERSION 0
+
+#ifndef TCF_API_CLASS
+#ifdef TCF_EXPORTS
+#define TCF_API_CLASS __declspec(dllexport)
+#else
+#define TCF_API_CLASS __declspec(dllimport)
+#endif // TCF_EXPORTS
+#endif // TCF_API_CLASS
+
+#ifndef TCF_API_TYPE
+#define TCF_API_TYPE
+#endif // TCF_API_TYPE
+
+#ifndef TCF_API_FUNC
+#ifdef TCF_EXPORTS
+#define TCF_API_FUNC extern "C" __declspec(dllexport)
+#else
+#define TCF_API_FUNC extern "C" __declspec(dllimport)
+#endif // TCF_EXPORTS
+#endif // TCF_API_FUNC
+
+#endif // __TCF_CONFIG_2__

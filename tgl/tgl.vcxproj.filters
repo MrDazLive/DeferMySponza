@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Public Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Public Header Files\GL">
+      <UniqueIdentifier>{1cd5498e-df64-4fad-a647-40562529ac0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Public Header Files\GL3">
+      <UniqueIdentifier>{94302b40-302a-4084-b4ed-90eba11d5493}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Public Header Files\tgl">
+      <UniqueIdentifier>{a6ea2b07-5943-47c6-bc26-3290e584f310}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Public Document Files">
+      <UniqueIdentifier>{f2f454f0-57d1-47d6-8cbd-9d91e5f0d863}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\tgl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\tgl\tgl.h">
+      <Filter>Public Header Files\tgl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL3\gl3.h">
+      <Filter>Public Header Files\GL3</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL\glext.h">
+      <Filter>Public Header Files\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL\glxext.h">
+      <Filter>Public Header Files\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL\wglext.h">
+      <Filter>Public Header Files\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GL\glcorearb.h">
+      <Filter>Public Header Files\GL</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="doc\tgl-license.txt">
+      <Filter>Public Document Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="doc\tgl.props">
+      <Filter>Public Document Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>
