@@ -22,6 +22,23 @@ public:
 	template <typename T> void AddAttributeDivisor(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer = 0);
 #pragma endregion
 private:
-	GLuint m_id;
+	GLuint m_id = 0;
 	GLuint m_attributeCount = 0;
 };
+
+#pragma region Template Methods
+
+template <typename T> void VertexArrayObject::AddAttribute(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer) {
+	glEnableVertexAttribArray(this->getAttributeCount());
+	glVertexAttribPointer(this->getAttributeCount(), size, type, normalized, sizeof(T), pointer);
+	m_attributeCount++;
+}
+
+template <typename T> void VertexArrayObject::AddAttributeDivisor(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer) {
+	glEnableVertexAttribArray(this->getAttributeCount());
+	glVertexAttribPointer(this->getAttributeCount(), size, type, normalized, sizeof(T), pointer);
+	glVertexAttribDivisor(this->getAttributeCount(), 1);
+	m_attributeCount++;
+}
+
+#pragma endregion

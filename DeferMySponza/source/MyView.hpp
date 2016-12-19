@@ -8,18 +8,41 @@
 #include <vector>
 #include <memory>
 
+class VertexArrayObject;
+template <typename T>
+class VertexBufferObject;
+
 class MyView : public tygra::WindowViewDelegate
 {
 public:
-
+#pragma region Constructors/Destructors
     MyView();
-
     ~MyView();
-
+#pragma endregion
+#pragma region Getters/Setters
     void setScene(const scene::Context * scene);
-
+#pragma endregion
 private:
+#pragma region Structs
+	struct Mesh;
+	struct Vertex;
 
+	struct InstanceVOs;
+	struct NonStaticVOs;
+	struct NonInstanceVOs;
+#pragma endregion
+#pragma region Members
+    const scene::Context * scene_;
+
+	InstanceVOs *m_instancedVOs;
+	NonStaticVOs *m_nonStaticVOs;
+	NonInstanceVOs *m_nonInstancedVOs;
+
+	std::vector<Mesh> m_instancedMeshes;
+	std::vector<Mesh> m_nonStaticMeshes;
+	std::vector<Mesh> m_nonInstancedMeshes;
+#pragma endregion
+#pragma region Window Methods
     void windowViewWillStart(tygra::Window * window) override;
 
     void windowViewDidReset(tygra::Window * window,
@@ -29,7 +52,12 @@ private:
     void windowViewDidStop(tygra::Window * window) override;
 
     void windowViewRender(tygra::Window * window) override;
-
-    const scene::Context * scene_;
-
+#pragma endregion
+#pragma region Setup Methods
+	void PrepareVOs();
+	void PrepareVAOs();
+	void PrepareVBOs();
+	void PrepareMeshData();
+	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<glm::mat4> &instances);
+#pragma endregion
 };

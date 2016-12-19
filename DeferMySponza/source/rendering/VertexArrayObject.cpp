@@ -41,17 +41,4 @@ void VertexArrayObject::SetActive() {
 	glBindVertexArray(this->getID());
 }
 
-template <typename T> void VertexArrayObject::AddAttribute(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer) {
-	glEnableVertexAttribArray(this->getAttributeCount());
-	glVertexAttribPointer(this->getAttributeCount(), size, type, normalized, sizeof(T), pointer);
-	m_attributeCount++;
-}
-
-template <typename T> void VertexArrayObject::AddAttributeDivisor(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer) {
-	glEnableVertexAttribArray(this->getAttributeCount());
-	glVertexAttribPointer(this->getAttributeCount(), size, type, normalized, sizeof(T), pointer);
-	glVertexAttribDivisor(this->getAttributeCount(), 1);
-	m_attributeCount++;
-}
-
 #pragma endregion
