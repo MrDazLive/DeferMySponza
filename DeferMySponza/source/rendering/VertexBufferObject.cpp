@@ -44,12 +44,12 @@ void VertexBufferObject<T>::setData(const T *data) {
 
 template <typename T>
 void VertexBufferObject<T>::SetActive(const GLenum target) {
-	glBindVertexArray(target, 0);
+	glBindBuffer(target, 0);
 }
 
 template <typename T>
 void VertexBufferObject<T>::SetActive(const VertexBufferObject *vbo) {
-	glBindVertexArray(vbo->getTarget(), vbo->getID());
+	glBindBuffer(vbo->getTarget(), vbo->getID());
 }
 
 #pragma endregion
@@ -57,7 +57,7 @@ void VertexBufferObject<T>::SetActive(const VertexBufferObject *vbo) {
 
 template <typename T>
 void VertexBufferObject<T>::SetActive() {
-	glBindVertexArray(this->getID());
+	glBindBuffer(this->getID());
 }
 
 template <typename T>

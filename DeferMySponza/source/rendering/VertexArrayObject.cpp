@@ -43,8 +43,4 @@ template <typename T> void VertexArrayObject::AddVertexAttribute(GLint size, GLe
 	m_attributeCount++;
 }
 
-void VertexArrayObject::BindBuffer(GLenum target, GLuint buffer) {
-	glBindBuffer(target, buffer);
-}
-
 #pragma endregion

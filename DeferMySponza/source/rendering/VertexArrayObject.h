@@ -17,7 +17,6 @@ public:
 #pragma endregion
 #pragma region Non-Static Methods
 	void SetActive();
-	void BindBuffer(GLenum target, GLuint buffer);
 	template <typename T> void AddVertexAttribute(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer = 0);
 #pragma endregion
 private:
