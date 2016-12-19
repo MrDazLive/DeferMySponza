@@ -37,9 +37,6 @@
     <ClCompile Include="source\rendering\VertexArrayObject.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="source\rendering\VertexBufferObject.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">

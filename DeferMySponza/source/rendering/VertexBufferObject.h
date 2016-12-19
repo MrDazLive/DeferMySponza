@@ -25,7 +25,7 @@ public:
 	void SetActive();
 	void BufferData();
 	void BufferSubData(GLintptr offset = 0);
-	void BindRange(GLuint index = 0, GLintptr offset = 0);
+	void BindRange(GLuint count, GLintptr offset = 0, GLuint index = 0);
 #pragma endregion
 private:
 	GLuint m_id;
@@ -115,19 +115,19 @@ void VertexBufferObject<T>::BufferSubData(GLintptr offset) {
 	this->SetActive();
 	glBufferSubData(m_target,
 		offset,
-		*m_data.size() * sizeof(T),
-		*m_data.data());
+		m_size * sizeof(T),
+		m_data);
 	VertexBufferObject::Reset(m_target);
 }
 
 template <typename T>
-void VertexBufferObject<T>::BindRange(GLuint index, GLintptr offset) {
+void VertexBufferObject<T>::BindRange(GLuint count, GLintptr offset, GLuint index) {
 	this->SetActive();
 	glBindBufferRange(m_usage,
 		index,
 		m_id,
 		offset,
-		*m_data.size() * sizeof(T));
+		count * sizeof(T));
 	VertexBufferObject::Reset(m_target);
 }
 

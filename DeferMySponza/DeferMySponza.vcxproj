@@ -320,7 +320,6 @@
     <ClCompile Include="source\MyController.cpp" />
     <ClCompile Include="source\MyView.cpp" />
     <ClCompile Include="source\rendering\VertexArrayObject.cpp" />
-    <ClCompile Include="source\rendering\VertexBufferObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyController.hpp" />

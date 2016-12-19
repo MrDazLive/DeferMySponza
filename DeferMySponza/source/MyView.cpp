@@ -86,6 +86,9 @@ void MyView::windowViewDidReset(tygra::Window * window,
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
+	delete m_instancedVOs;
+	delete m_nonStaticVOs;
+	delete m_nonInstancedVOs;
 }
 
 void MyView::windowViewRender(tygra::Window * window) {
@@ -210,14 +213,15 @@ void MyView::PrepareMeshData() {
 
 		isStatic ?
 			instance ?
-			m_instancedMeshes.push_back(m) :
-			m_nonInstancedMeshes.push_back(m) :
+				m_instancedMeshes.push_back(m):
+				m_nonInstancedMeshes.push_back(m):
 			m_nonStaticMeshes.push_back(m);
 	}
 
-	std::cout << m_instancedMeshes.size() << std::endl;
-	std::cout << m_nonInstancedMeshes.size() << std::endl;
-	std::cout << m_nonStaticMeshes.size() << std::endl;
+	std::cout << "Instanced Meshes:  " << m_instancedMeshes.size() << std::endl;
+	std::cout << "Separate Meshes:   " << m_nonInstancedMeshes.size() << std::endl;
+	std::cout << "Non Static Meshes: " << m_nonStaticMeshes.size() << std::endl;
+	std::cout << std::endl;
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<glm::mat4> &instances) {
