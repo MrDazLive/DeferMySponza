@@ -18,7 +18,8 @@ public:
 #pragma endregion
 #pragma region Non-Static Methods
 	void SetActive();
-	template <typename T> void AddVertexAttribute(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer = 0);
+	template <typename T> void AddAttribute(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer = 0);
+	template <typename T> void AddAttributeDivisor(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer = 0);
 #pragma endregion
 private:
 	GLuint m_id;

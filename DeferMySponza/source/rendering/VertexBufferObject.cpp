@@ -80,4 +80,15 @@ void VertexBufferObject<T>::BufferSubData(GLintptr offset) {
 	VertexBufferObject::Reset(m_target);
 }
 
+template <typename T>
+void VertexBufferObject<T>::BindRange(GLuint index, GLintptr offset) {
+	this->SetActive();
+	glBindBufferRange(m_usage,
+		index,
+		m_id,
+		offset,
+		*m_data.size() * sizeof(T));
+	VertexBufferObject::Reset(m_target);
+}
+
 #pragma endregion
