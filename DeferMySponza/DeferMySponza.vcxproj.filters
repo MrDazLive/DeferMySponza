@@ -17,6 +17,12 @@
       <UniqueIdentifier>{5c5d9556-ec01-447d-97f1-12aa7f8cc756}</UniqueIdentifier>
       <Extensions>glsl</Extensions>
     </Filter>
+    <Filter Include="Header Files\Rendering">
+      <UniqueIdentifier>{3024f970-952c-419d-a67d-454831a7d72e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Rendering">
+      <UniqueIdentifier>{09e7b2db-1988-46d0-be2e-a514f5d94ae9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\MyView.cpp">
@@ -28,6 +34,12 @@
     <ClCompile Include="source\MyController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\rendering\VertexArrayObject.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rendering\VertexBufferObject.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">
@@ -35,6 +47,12 @@
     </ClInclude>
     <ClInclude Include="source\MyController.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\VertexArrayObject.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\VertexBufferObject.h">
+      <Filter>Header Files\Rendering</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

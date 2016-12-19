@@ -319,10 +319,14 @@
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\MyController.cpp" />
     <ClCompile Include="source\MyView.cpp" />
+    <ClCompile Include="source\rendering\VertexArrayObject.cpp" />
+    <ClCompile Include="source\rendering\VertexBufferObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyController.hpp" />
     <ClInclude Include="source\MyView.hpp" />
+    <ClInclude Include="source\rendering\VertexArrayObject.h" />
+    <ClInclude Include="source\rendering\VertexBufferObject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
