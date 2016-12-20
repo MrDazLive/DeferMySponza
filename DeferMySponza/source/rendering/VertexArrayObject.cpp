@@ -38,7 +38,7 @@ void VertexArrayObject::SetActive(const VertexArrayObject *vao) {
 #pragma region Non-Static Methods
 
 void VertexArrayObject::SetActive() {
-	glBindVertexArray(this->getID());
+	VertexArrayObject::SetActive(this);
 }
 
 #pragma endregion

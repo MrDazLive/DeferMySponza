@@ -22,8 +22,8 @@ public:
 	template <typename T> void AddAttributeDivisor(GLint size, GLenum type, GLboolean normalized, const GLvoid *pointer = 0);
 #pragma endregion
 private:
-	GLuint m_id = 0;
-	GLuint m_attributeCount = 0;
+	GLuint m_id{ 0 };
+	GLuint m_attributeCount{ 0 };
 };
 
 #pragma region Template Methods

@@ -11,8 +11,8 @@ public:
 #pragma endregion
 #pragma region Getters/Setters
 	GLuint getID() const;
-	GLuint getTarget() const;
-	GLuint getUsage() const;
+	GLenum getTarget() const;
+	GLenum getUsage() const;
 
 	void setData(T *data);
 	void setSize(GLuint size);
@@ -60,12 +60,12 @@ GLuint VertexBufferObject<T>::getID() const {
 }
 
 template <typename T>
-GLuint VertexBufferObject<T>::getTarget() const {
+GLenum VertexBufferObject<T>::getTarget() const {
 	return m_target;
 }
 
 template <typename T>
-GLuint VertexBufferObject<T>::getUsage() const {
+GLenum VertexBufferObject<T>::getUsage() const {
 	return m_usage;
 }
 
@@ -97,7 +97,7 @@ void VertexBufferObject<T>::SetActive(const VertexBufferObject *vbo) {
 
 template <typename T>
 void VertexBufferObject<T>::SetActive() {
-	glBindBuffer(this->getTarget(), this->getID());
+	VertexBufferObject<T>::SetActive(this);
 }
 
 template <typename T>
