@@ -151,8 +151,7 @@ void MyView::windowViewRender(tygra::Window * window) {
 		const auto& instance = scene_->getInstanceById(id);
 
 		glm::mat4 model_transform = (const glm::mat4x3&)instance.getTransformationMatrix();
-		GLuint model_transform_id = glGetUniformLocation(m_nonInstancedProgram->getID(), "model_transform");
-		glUniformMatrix4fv(model_transform_id, 1, GL_FALSE, glm::value_ptr(model_transform));
+		m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, model_transform, "model_transform");
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}

@@ -1,11 +1,13 @@
 #pragma once
 
-#include<iostream>
+#include <iostream>
 #include <GL/glcorearb.h>
 #include <functional>
 
+#include "VertexBufferObject.h"
+
 class Shader;
-template <typename T> class VertexBufferObject;
+//template <typename T> class VertexBufferObject;
 
 class ShaderProgram {
 public:
@@ -28,7 +30,7 @@ public:
 	void AddShader(const Shader *shader);
 	void AddInAttribute(const std::string name);
 	void AddOutAttribute(const std::string name);
-	template <typename T> void BindBlock(const VertexBufferObject<T> *vbo, const std::string name);
+	template <typename T> void BindBlock(VertexBufferObject<T> *vbo, const std::string name);
 	template <typename T> void BindUniform(std::function<void(GLint, GLsizei, GLboolean, const GLfloat *)> func, const T& value, const std::string name);
 #pragma endregion
 private:
@@ -40,11 +42,11 @@ private:
 #pragma region Non-Static Methods
 
 template <typename T>
-void ShaderProgram::BindBlock(const VertexBufferObject<T> *vbo, const std::string name) {
+void ShaderProgram::BindBlock(VertexBufferObject<T> *vbo, const std::string name) {
 	vbo->SetActive();
-	GLuint index = glGetUniformBlockIndex(m_id, name);
+	GLuint index = glGetUniformBlockIndex(m_id, name.c_str());
 	glUniformBlockBinding(m_id, index, 0);
-	VertexBuffer::Reset();
+	VertexBuffer::Reset(vbo->getTarget());
 }
 
 template <typename T>
