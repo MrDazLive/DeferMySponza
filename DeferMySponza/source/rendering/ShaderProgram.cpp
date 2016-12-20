@@ -2,6 +2,7 @@
 
 #include <tgl\tgl.h>
 #include "Shader.h"
+#include "VertexBufferObject.h"
 
 #pragma region Constructors/Destructors
 

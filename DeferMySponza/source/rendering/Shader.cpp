@@ -54,6 +54,9 @@ void Shader::LoadFile(const std::string name) {
 		(const GLchar **)&shader_code, NULL);
 	glCompileShader(m_id);
 	glGetShaderiv(m_id, GL_COMPILE_STATUS, &m_status);
+	if (m_status != GL_TRUE) {
+		this->LogInfo();
+	}
 }
 
 #pragma endregion
