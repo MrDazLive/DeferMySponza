@@ -54,7 +54,8 @@ struct MyView::NonInstanceVOs {
 	VertexArrayObject vao = VertexArrayObject();
 	VertexBufferObject<GLuint> element_vbo = VertexBufferObject<GLuint>(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	VertexBufferObject<Vertex> vertex_vbo = VertexBufferObject<Vertex>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
-	VertexBufferObject<glm::mat4> instance_vbo = VertexBufferObject<glm::mat4>(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+
+	std::vector<glm::mat4> instances;
 };
 
 #pragma endregion
@@ -118,43 +119,13 @@ void MyView::windowViewRender(tygra::Window * window) {
 	glClearColor(0.f, 0.f, 0.25f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	scene::Camera camera = scene_->getCamera();
-	glm::vec3 camera_pos = (const glm::vec3&)camera.getPosition();
-	glm::vec3 camera_dir = (const glm::vec3&)camera.getDirection();
-	glm::mat4 view_xform = glm::lookAt(camera_pos, camera_pos + camera_dir, glm::vec3(0, 1, 0));
-	glm::mat4 combined_xform = projection_transform * view_xform;
-
-	m_instancedProgram->SetActive();
-	m_instancedProgram->BindUniform(glUniformMatrix4fv, combined_xform, "combined_xform");
+	UpdateViewTransform();
 
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
 	glDisable(GL_BLEND);
-	m_instancedVOs->vao.SetActive();
-	for (const Mesh& mesh : m_instancedMeshes) {
-		//m_instancedVOs->instance_vbo.BindRange(mesh.instanceCount, mesh.instanceIndex);
-		glDrawElementsInstancedBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex);
-	}
 
-	UpdateNonStaticTransforms();
-	m_nonStaticVOs->vao.SetActive();
-	for (const Mesh& mesh : m_nonStaticMeshes) {
-		//m_nonStaticVOs->instance_vbo.BindRange(mesh.instanceCount, mesh.instanceIndex);
-		glDrawElementsInstancedBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex);
-	}
-
-	m_nonInstancedProgram->SetActive();
-	m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, combined_xform, "combined_xform");
-	m_nonInstancedVOs->vao.SetActive();
-	for (const Mesh &mesh : m_nonInstancedMeshes) {
-		const GLuint id = scene_->getInstancesByMeshId(mesh.id)[0];
-		const auto& instance = scene_->getInstanceById(id);
-
-		glm::mat4 model_transform = (const glm::mat4x3&)instance.getTransformationMatrix();
-		m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, model_transform, "model_transform");
-
-		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
-	}
+	RenderEnvironment();
 
 	ShaderProgram::Reset();
 	VertexArrayObject::Reset();
@@ -270,9 +241,7 @@ void MyView::PrepareVBOs() {
 	m_nonInstancedVOs->element_vbo.setData(&elements[0]);
 	m_nonInstancedVOs->element_vbo.setSize(elements.size());
 	m_nonInstancedVOs->element_vbo.BufferData();
-	m_nonInstancedVOs->instance_vbo.setData(&m_nonStaticVOs->instances[0]);
-	m_nonInstancedVOs->instance_vbo.setSize(m_nonStaticVOs->instances.size());
-	m_nonInstancedVOs->instance_vbo.BufferData();
+	m_nonInstancedVOs->instances = instances;
 	vertices.clear();
 	elements.clear();
 	instances.clear();
@@ -341,8 +310,8 @@ void MyView::PrepareMeshData() {
 			m_nonStaticMeshes.push_back(m);
 	}
 
-	std::cout << "Instanced Meshes:  " << m_instancedMeshes.size() << std::endl;
-	std::cout << "Separate Meshes:   " << m_nonInstancedMeshes.size() << std::endl;
+	std::cout << "Instanced Meshes: " << m_instancedMeshes.size() << " || ";
+	std::cout << "Unique Meshes: " << m_nonInstancedMeshes.size() << " || ";
 	std::cout << "Non Static Meshes: " << m_nonStaticMeshes.size() << std::endl;
 	std::cout << std::endl;
 }
@@ -395,7 +364,49 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 }
 
 #pragma endregion
+#pragma region Render Methods
+
+void MyView::RenderEnvironment() {
+	glm::mat4 combined_transform = projection_transform * view_transform;
+
+	m_instancedProgram->SetActive();
+	m_instancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
+
+	m_instancedVOs->vao.SetActive();
+	for (const Mesh& mesh : m_instancedMeshes) {
+		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
+	}
+
+	UpdateNonStaticTransforms();
+	m_nonStaticVOs->vao.SetActive();
+	for (const Mesh& mesh : m_nonStaticMeshes) {
+		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
+	}
+
+	m_nonInstancedProgram->SetActive();
+	m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
+
+	m_nonInstancedVOs->vao.SetActive();
+	GLuint count = m_nonInstancedMeshes.size();
+	for (GLuint i = 0; i < count; i++) {
+		const Mesh &mesh = m_nonInstancedMeshes[i];
+
+		glm::mat4 model_transform = m_nonInstancedVOs->instances[i];
+		m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, model_transform, "model_transform");
+
+		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
+	}
+}
+
+#pragma endregion
 #pragma region Additional Methods
+
+void MyView::UpdateViewTransform() {
+	scene::Camera camera = scene_->getCamera();
+	glm::vec3 camera_pos = (const glm::vec3&)camera.getPosition();
+	glm::vec3 camera_dir = (const glm::vec3&)camera.getDirection();
+	view_transform = glm::lookAt(camera_pos, camera_pos + camera_dir, glm::vec3(0, 1, 0));
+}
 
 void MyView::UpdateNonStaticTransforms() {
 	m_nonStaticVOs->instances.clear();

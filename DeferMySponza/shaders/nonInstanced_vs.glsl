@@ -1,6 +1,6 @@
 #version 330
 
-uniform mat4 combined_xform;
+uniform mat4 combined_transform;
 uniform mat4 model_transform;
 
 layout(location = 0) in vec3 vertex_position;
@@ -12,7 +12,7 @@ out vec3 varying_normal;
 out vec2 varying_texture_coordinate;
 
 void main(void) {
-	gl_Position = combined_xform * model_transform * vec4(vertex_position, 1.0);
+	gl_Position = combined_transform * model_transform * vec4(vertex_position, 1.0);
 	varying_position = mat4x3(model_transform) * vec4(vertex_position, 1.0);
 	varying_normal = mat3(model_transform) * vertex_normal;
 	varying_texture_coordinate = vertex_texture_coordinate;

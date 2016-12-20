@@ -37,6 +37,7 @@ private:
 #pragma endregion
 #pragma region Members
     const scene::Context *scene_;
+	glm::mat4 view_transform;
 	glm::mat4 projection_transform;
 
 	InstanceVOs *m_instancedVOs;
@@ -74,7 +75,11 @@ private:
 	void PrepareMeshData();
 	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<glm::mat4> &instances);
 #pragma endregion
+#pragma region Render Methods
+	void RenderEnvironment();
+#pragma endregion
 #pragma region Additional Methods
+	void UpdateViewTransform();
 	void UpdateNonStaticTransforms();
 #pragma endregion
 };
