@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 
-template <typename T> class VertexBufferObject;
+class VertexBufferObject;
 class VertexArrayObject;
 class ShaderProgram;
 class Shader;
