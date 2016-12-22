@@ -322,10 +322,12 @@
     <ClCompile Include="source\rendering\Shader.cpp" />
     <ClCompile Include="source\rendering\ShaderProgram.cpp" />
     <ClCompile Include="source\rendering\VertexArrayObject.cpp" />
+    <ClCompile Include="source\rendering\VertexBufferObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyController.hpp" />
     <ClInclude Include="source\MyView.hpp" />
+    <ClInclude Include="source\rendering\enums\Buffer.h" />
     <ClInclude Include="source\rendering\Shader.h" />
     <ClInclude Include="source\rendering\ShaderProgram.h" />
     <ClInclude Include="source\rendering\VertexArrayObject.h" />

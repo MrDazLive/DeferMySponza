@@ -2,20 +2,16 @@
 
 #include <GL/glcorearb.h>
 
-template <typename T>
 class VertexBufferObject {
 public:
 #pragma region Constructors/Destructors
-	VertexBufferObject<T>(GLenum target, GLenum usage);
+	VertexBufferObject(GLenum target, GLenum usage);
 	~VertexBufferObject();
 #pragma endregion
 #pragma region Getters/Setters
 	GLuint getID() const;
 	GLenum getTarget() const;
 	GLenum getUsage() const;
-
-	void setData(T *data);
-	void setSize(GLuint size);
 #pragma endregion
 #pragma region Static Methods
 	static void Reset(const GLenum target);
@@ -23,111 +19,35 @@ public:
 #pragma endregion
 #pragma region Non-Static Methods
 	void SetActive();
-	void BufferData();
-	void BufferSubData(GLintptr offset = 0);
+	template <typename T> void BufferData(const T &data);
+	template <typename T> void BufferSubData(const T &data, GLintptr offset = 0);
 	void BindRange(GLuint count, GLintptr offset = 0, GLuint index = 0);
 #pragma endregion
 private:
 	GLuint m_id;
 	GLenum m_target;
 	GLenum m_usage;
-	T *m_data;
-	GLuint m_size;
 };
 
-#define VertexBuffer VertexBufferObject<void>
-
-#pragma region Constructors/Destructors
-
-template <typename T>
-VertexBufferObject<T>::VertexBufferObject(GLenum target, GLenum usage) {
-	glGenBuffers(1, &m_id);
-	m_target = target;
-	m_usage = usage;
-}
-
-template <typename T>
-VertexBufferObject<T>::~VertexBufferObject() {
-	glDeleteBuffers(1, &m_id);
-}
-
-#pragma endregion
-#pragma region Getters/Setters
-
-template <typename T>
-GLuint VertexBufferObject<T>::getID() const {
-	return m_id;
-}
-
-template <typename T>
-GLenum VertexBufferObject<T>::getTarget() const {
-	return m_target;
-}
-
-template <typename T>
-GLenum VertexBufferObject<T>::getUsage() const {
-	return m_usage;
-}
-
-template <typename T>
-void VertexBufferObject<T>::setData(T *data) {
-	m_data = data;
-}
-
-template <typename T>
-void VertexBufferObject<T>::setSize(GLuint size) {
-	m_size = size;
-}
-
-#pragma endregion
-#pragma region Static Methods
-
-template <typename T>
-void VertexBufferObject<T>::Reset(const GLenum target) {
-	glBindBuffer(target, 0);
-}
-
-template <typename T>
-void VertexBufferObject<T>::SetActive(const VertexBufferObject *vbo) {
-	glBindBuffer(vbo->getTarget(), vbo->getID());
-}
-
-#pragma endregion
 #pragma region Non-Static Methods
 
 template <typename T>
-void VertexBufferObject<T>::SetActive() {
-	VertexBufferObject<T>::SetActive(this);
-}
-
-template <typename T>
-void VertexBufferObject<T>::BufferData() {
+void VertexBufferObject::BufferData(const T &data) {
 	this->SetActive();
 	glBufferData(m_target,
-		m_size * sizeof(T),
-		m_data,
+		data.size() * sizeof(data[0]),
+		data.data(),
 		m_usage);
 	VertexBufferObject::Reset(m_target);
 }
 
 template <typename T>
-void VertexBufferObject<T>::BufferSubData(GLintptr offset) {
+void VertexBufferObject::BufferSubData(const T &data, GLintptr offset) {
 	this->SetActive();
 	glBufferSubData(m_target,
 		offset,
-		m_size * sizeof(T),
-		m_data);
-	VertexBufferObject::Reset(m_target);
-}
-
-template <typename T>
-void VertexBufferObject<T>::BindRange(GLuint count, GLintptr offset, GLuint index) {
-	this->SetActive();
-	glBindBufferRange(m_usage,
-		index,
-		m_id,
-		offset,
-		count * sizeof(T));
+		data.size() * sizeof(data[0]),
+		data.data());
 	VertexBufferObject::Reset(m_target);
 }
 

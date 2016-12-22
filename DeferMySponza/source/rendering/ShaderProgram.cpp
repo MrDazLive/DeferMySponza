@@ -64,4 +64,11 @@ void ShaderProgram::AddOutAttribute(const std::string name) {
 	m_outAttributeCount++;
 }
 
+void ShaderProgram::BindBlock(VertexBufferObject *vbo, const std::string name) {
+	vbo->SetActive();
+	GLuint index = glGetUniformBlockIndex(m_id, name.c_str());
+	glUniformBlockBinding(m_id, index, 0);
+	VertexBufferObject::Reset(vbo->getTarget());
+}
+
 #pragma endregion

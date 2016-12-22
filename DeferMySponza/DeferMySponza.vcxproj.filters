@@ -23,6 +23,9 @@
     <Filter Include="Source Files\Rendering">
       <UniqueIdentifier>{09e7b2db-1988-46d0-be2e-a514f5d94ae9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Rendering\Enums">
+      <UniqueIdentifier>{46eeb10a-4163-4a7a-b009-eada918a829a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\MyView.cpp">
@@ -41,6 +44,9 @@
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="source\rendering\Shader.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rendering\VertexBufferObject.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,6 +68,9 @@
     </ClInclude>
     <ClInclude Include="source\rendering\Shader.h">
       <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\enums\Buffer.h">
+      <Filter>Header Files\Rendering\Enums</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
