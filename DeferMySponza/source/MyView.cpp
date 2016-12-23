@@ -270,8 +270,8 @@ void MyView::PrepareVBOs() {
 
 void MyView::PrepareUBOs() {
 	m_materialUBO = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	//m_materialUBO->BindRange(0, 0, sizeof(scene::Material));
-	m_materialUBO->BufferData(scene_->getAllMaterials());
+	m_materialUBO->BindRange(0, 0, sizeof(scene::Material) * 7);
+	m_materialUBO->BufferData(scene_->getAllMaterials()[0], 7);
 }
 
 void MyView::PrepareTimers() {

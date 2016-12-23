@@ -49,7 +49,7 @@ void VertexBufferObject::SetActive() {
 
 void VertexBufferObject::BindRange(GLuint index, GLintptr offset, GLuint size) {
 	this->SetActive();
-	glBindBufferRange(m_usage,
+	glBindBufferRange(m_target,
 		index,
 		m_id,
 		offset,

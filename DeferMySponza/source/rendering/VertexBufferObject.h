@@ -20,6 +20,7 @@ public:
 #pragma region Non-Static Methods
 	void SetActive();
 	template <typename T> void BufferData(const T &data);
+	template <typename T> void BufferData(const T &data, GLuint count);
 	template <typename T> void BufferSubData(const T &data, GLintptr offset = 0);
 	void BindRange(GLuint count, GLintptr offset = 0, GLuint index = 0);
 #pragma endregion
@@ -37,6 +38,16 @@ void VertexBufferObject::BufferData(const T &data) {
 	glBufferData(m_target,
 		data.size() * sizeof(data[0]),
 		data.data(),
+		m_usage);
+	VertexBufferObject::Reset(m_target);
+}
+
+template <typename T>
+void VertexBufferObject::BufferData(const T &data, GLuint count) {
+	this->SetActive();
+	glBufferData(m_target,
+		count * sizeof(T),
+		&data,
 		m_usage);
 	VertexBufferObject::Reset(m_target);
 }

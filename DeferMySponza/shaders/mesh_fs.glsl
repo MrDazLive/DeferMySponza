@@ -38,7 +38,7 @@ void main(void) {
 		fragment_colour.rgb = vec3(0, 0, 0);
 
 
-	//fragment_colour.rgb = material[0].diffuse;
+	fragment_colour.rgb = material[varying_material - 200].diffuse;
 
 	//float val = (varying_material - 200) / 6;
 	//fragment_colour.rgb = vec3(val) + vec3(1);
