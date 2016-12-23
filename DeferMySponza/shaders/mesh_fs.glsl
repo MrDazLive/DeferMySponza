@@ -25,9 +25,9 @@ void main(void) {
 	else if(varying_material == 201)
 		fragment_colour.rgb = vec3(1, 1, 0);	///ROOF
 	else if(varying_material == 202)
-		fragment_colour.rgb = vec3(1, 0, 1);	///FOLIAGE
+		fragment_colour.rgb = vec3(1, 0, 1);	///DRAPES
 	else if(varying_material == 203)
-		fragment_colour.rgb = vec3(1, 0, 0);	///DECORATION !?!?
+		fragment_colour.rgb = vec3(1, 0, 0);	///POLES
 	else if(varying_material == 204)
 		fragment_colour.rgb = vec3(0, 1, 1);	///BUDAH
 	else if(varying_material == 205)

@@ -211,7 +211,7 @@ void MyView::PrepareVAOs() {
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
-	m_instancedVOs->vao.AddAttributeDivisor<Instance>(1, GL_INT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
+	m_instancedVOs->vao.AddAttributeDivisor<Instance>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
 
 	m_nonStaticVOs->vao.SetActive();
 	m_nonStaticVOs->vbo[Buffer::Element].SetActive();
@@ -224,8 +224,7 @@ void MyView::PrepareVAOs() {
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
-	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(1, GL_INT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
-	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
 
 	m_nonInstancedVOs->vao.SetActive();
 	m_nonInstancedVOs->vbo[Buffer::Element].SetActive();
