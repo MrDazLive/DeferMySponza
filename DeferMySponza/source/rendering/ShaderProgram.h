@@ -17,14 +17,17 @@ public:
 	GLuint getID() const;
 	GLuint getInAttributeCount() const;
 	GLuint getOutAttributeCount() const;
+	GLint getStatus() const;
 #pragma endregion
 #pragma region Static Methods
 	static void Reset();
 	static void SetActive(const ShaderProgram *program);
+	static void LogInfo(const ShaderProgram *shader);
 #pragma endregion
 #pragma region Non-Static Methods
 	void Link();
 	void SetActive();
+	void LogInfo();
 	void AddShader(const Shader *shader);
 	void AddInAttribute(const std::string name);
 	void AddOutAttribute(const std::string name);
@@ -35,6 +38,7 @@ private:
 	GLuint m_id;
 	GLuint m_inAttributeCount{ 0 };
 	GLuint m_outAttributeCount{ 0 };
+	GLint m_status{ GL_FALSE };
 };
 
 #pragma region Non-Static Methods

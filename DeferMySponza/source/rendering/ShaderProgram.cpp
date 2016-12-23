@@ -28,6 +28,10 @@ GLuint ShaderProgram::getOutAttributeCount() const {
 	return m_outAttributeCount;
 }
 
+GLint ShaderProgram::getStatus() const {
+	return m_status;
+}
+
 #pragma endregion
 #pragma region Static Methods
 
@@ -39,15 +43,30 @@ void ShaderProgram::SetActive(const ShaderProgram *program) {
 	glUseProgram(program->getID());
 }
 
+void ShaderProgram::LogInfo(const ShaderProgram *shader) {
+	const int string_length = 1024;
+	GLchar log[string_length] = "";
+	glGetProgramInfoLog(shader->getID(), string_length, NULL, log);
+	std::cerr << log << std::endl;
+}
+
 #pragma endregion
 #pragma region Non-Static Methods
 
 void ShaderProgram::Link() {
 	glLinkProgram(this->getID());
+	glGetProgramiv(this->getID(), GL_LINK_STATUS, &m_status);
+	if (m_status != GL_TRUE) {
+		this->LogInfo();
+	}
 }
 
 void ShaderProgram::SetActive() {
 	ShaderProgram::SetActive(this);
+}
+
+void ShaderProgram::LogInfo() {
+	ShaderProgram::LogInfo(this);
 }
 
 void ShaderProgram::AddShader(const Shader *shader) {

@@ -73,7 +73,7 @@ private:
 	void PrepareShaders();
 	void PreparePrograms();
 	void PrepareMeshData();
-	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<glm::mat4> &instances);
+	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<GLint> &materials, std::vector<glm::mat4> &instances);
 #pragma endregion
 #pragma region Render Methods
 	void RenderEnvironment();
