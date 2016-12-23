@@ -15,6 +15,8 @@
 #include "rendering\VertexBufferObject.h"
 #include "rendering\enums\Buffer.h"
 
+#include "utilities\TimeQuery.h"
+
 #pragma region Structs
 
 struct MyView::Mesh {
@@ -94,6 +96,7 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 	glBlendEquation(GL_FUNC_ADD);
 
 	PrepareVOs();
+	PrepareTimers();
 }
 
 void MyView::windowViewDidReset(tygra::Window * window,
@@ -112,12 +115,19 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonStaticVOs;
 	delete m_nonInstancedVOs;
 
+	delete m_materialUBO;
+
 	delete m_instancedProgram;
 	delete m_nonInstancedProgram;
 
 	delete m_instancedVS;
 	delete m_nonInstancedVS;
 	delete m_meshFS;
+
+	delete m_queryFullDraw;
+	delete m_queryInstancedDraw;
+	delete m_queryMovingDraw;
+	delete m_queryUniqueDraw;
 }
 
 void MyView::windowViewRender(tygra::Window * window) {
@@ -134,13 +144,30 @@ void MyView::windowViewRender(tygra::Window * window) {
 	glDepthFunc(GL_LEQUAL);
 	glDisable(GL_BLEND);
 
+	//m_queryFullDraw->Begin();
 	RenderEnvironment();
+	//m_queryFullDraw->End();
 
 	VertexArrayObject::Reset();
 }
 
 #pragma endregion
 #pragma region Additional Methods
+
+void MyView::LogTimers() {
+	std::cout << "Environemnt Draw: (" << m_queryFullDraw->toString() << ")" << std::endl;
+	std::cout << "Instanced Draw: (" << m_queryInstancedDraw->toString() << ")" << std::endl;
+	std::cout << "Moving Draw: (" << m_queryMovingDraw->toString() << ")" << std::endl;
+	std::cout << "Unique Draw: (" << m_queryUniqueDraw->toString() << ")" << std::endl;
+	std::cout << std::endl;
+}
+
+void MyView::ResetTimers() {
+	m_queryFullDraw->Reset();
+	m_queryInstancedDraw->Reset();
+	m_queryMovingDraw->Reset();
+	m_queryUniqueDraw->Reset();
+}
 
 void MyView::ReloadShaders() {
 	delete m_instancedVS;
@@ -166,6 +193,7 @@ void MyView::PrepareVOs() {
 
 	PrepareVAOs();
 	PrepareVBOs();
+	PrepareUBOs();
 
 	PrepareShaders();
 	PreparePrograms();
@@ -241,6 +269,19 @@ void MyView::PrepareVBOs() {
 	instances.clear();
 }
 
+void MyView::PrepareUBOs() {
+	m_materialUBO = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	//m_materialUBO->BindRange(0, 0, sizeof(scene::Material));
+	m_materialUBO->BufferData(scene_->getAllMaterials());
+}
+
+void MyView::PrepareTimers() {
+	m_queryFullDraw = new TimeQuery();
+	m_queryInstancedDraw = new TimeQuery();
+	m_queryMovingDraw = new TimeQuery();
+	m_queryUniqueDraw = new TimeQuery();
+}
+
 void MyView::PrepareShaders() {
 	m_instancedVS = new Shader(GL_VERTEX_SHADER);
 	m_instancedVS->LoadFile("resource:///instanced_vs.glsl");
@@ -268,6 +309,8 @@ void MyView::PreparePrograms() {
 
 	m_instancedProgram->Link();
 
+	m_instancedProgram->BindBlock(m_materialUBO, "block_material");
+
 	m_nonInstancedProgram = new ShaderProgram();
 
 	m_nonInstancedProgram->AddShader(m_nonInstancedVS);
@@ -280,6 +323,8 @@ void MyView::PreparePrograms() {
 	m_nonInstancedProgram->AddOutAttribute("fragment_colour");
 
 	m_nonInstancedProgram->Link();
+
+	m_nonInstancedProgram->BindBlock(m_materialUBO, "block_material");
 }
 
 void MyView::PrepareMeshData() {
@@ -370,20 +415,25 @@ void MyView::RenderEnvironment() {
 	m_instancedProgram->SetActive();
 	m_instancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
 
+	m_queryInstancedDraw->Begin();
 	m_instancedVOs->vao.SetActive();
 	for (const Mesh& mesh : m_instancedMeshes) {
 		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
 	}
+	m_queryInstancedDraw->End();
 
+	m_queryMovingDraw->Begin();
 	UpdateNonStaticTransforms();
 	m_nonStaticVOs->vao.SetActive();
 	for (const Mesh& mesh : m_nonStaticMeshes) {
 		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
 	}
+	m_queryMovingDraw->End();
 
 	m_nonInstancedProgram->SetActive();
 	m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
 
+	m_queryUniqueDraw->Begin();
 	m_nonInstancedVOs->vao.SetActive();
 	GLuint count = m_nonInstancedMeshes.size();
 	for (GLuint i = 0; i < count; i++) {
@@ -398,6 +448,7 @@ void MyView::RenderEnvironment() {
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}
+	m_queryUniqueDraw->End();
 }
 
 #pragma endregion

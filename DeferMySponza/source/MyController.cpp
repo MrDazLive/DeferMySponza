@@ -30,7 +30,9 @@ void MyController::windowControlWillStart(tygra::Window * window)
     window->setView(view_);
     window->setTitle("Real-Time Graphics :: DeferMySponza");
     std::cout << "Real-Time Graphics :: DeferMySponza" << std::endl;
-    std::cout << "  Press F2 to toggle an animated camera" << std::endl;
+	std::cout << "  Press F2 to toggle an animated camera" << std::endl;
+	std::cout << "  Press F3 to display draw timers" << std::endl;
+	std::cout << "  Press F4 to reset draw timers" << std::endl;
 }
 
 void MyController::windowControlDidStop(tygra::Window * window)
@@ -108,12 +110,15 @@ void MyController::windowControlKeyboardChanged(tygra::Window * window,
 
     switch (key_index)
     {
-	case tygra::kWindowKeyF1:
-		view_->ReloadShaders();
-		break;
     case tygra::kWindowKeyF2:
         scene_->toggleCameraAnimation();
         break;
+	case tygra::kWindowKeyF3:
+		view_->LogTimers();
+		break;
+	case tygra::kWindowKeyF4:
+		view_->ResetTimers();
+		break;
     }
 }
 

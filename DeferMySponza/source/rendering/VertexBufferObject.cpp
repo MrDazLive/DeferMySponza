@@ -47,13 +47,13 @@ void VertexBufferObject::SetActive() {
 	VertexBufferObject::SetActive(this);
 }
 
-void VertexBufferObject::BindRange(GLuint count, GLintptr offset, GLuint index) {
+void VertexBufferObject::BindRange(GLuint index, GLintptr offset, GLuint size) {
 	this->SetActive();
 	glBindBufferRange(m_usage,
 		index,
 		m_id,
 		offset,
-		count);
+		size);
 	VertexBufferObject::Reset(m_target);
 }
 

@@ -26,6 +26,12 @@
     <Filter Include="Header Files\Rendering\Enums">
       <UniqueIdentifier>{46eeb10a-4163-4a7a-b009-eada918a829a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities">
+      <UniqueIdentifier>{8e8ad826-4eb7-45f6-acfb-ac99543106f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities">
+      <UniqueIdentifier>{55da4e06-bc53-4b37-ae80-0817d528303d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\MyView.cpp">
@@ -49,6 +55,9 @@
     <ClCompile Include="source\rendering\VertexBufferObject.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="source\utilities\TimeQuery.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">
@@ -71,6 +80,9 @@
     </ClInclude>
     <ClInclude Include="source\rendering\enums\Buffer.h">
       <Filter>Header Files\Rendering\Enums</Filter>
+    </ClInclude>
+    <ClInclude Include="source\utilities\TimeQuery.h">
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

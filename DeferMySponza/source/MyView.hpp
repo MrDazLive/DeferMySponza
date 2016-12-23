@@ -11,6 +11,7 @@
 class VertexBufferObject;
 class VertexArrayObject;
 class ShaderProgram;
+class TimeQuery;
 class Shader;
 
 class MyView : public tygra::WindowViewDelegate
@@ -24,6 +25,8 @@ public:
     void setScene(const scene::Context * scene);
 #pragma endregion
 #pragma region Additional Methods
+	void LogTimers();
+	void ResetTimers();
 	void ReloadShaders();
 #pragma endregion
 private:
@@ -45,12 +48,19 @@ private:
 	NonStaticVOs *m_nonStaticVOs;
 	NonInstanceVOs *m_nonInstancedVOs;
 
+	VertexBufferObject *m_materialUBO;
+
 	std::vector<Mesh> m_instancedMeshes;
 	std::vector<Mesh> m_nonStaticMeshes;
 	std::vector<Mesh> m_nonInstancedMeshes;
 
 	ShaderProgram *m_instancedProgram;
 	ShaderProgram *m_nonInstancedProgram;
+
+	TimeQuery *m_queryFullDraw;
+	TimeQuery *m_queryInstancedDraw;
+	TimeQuery *m_queryMovingDraw;
+	TimeQuery *m_queryUniqueDraw;
 
 	Shader *m_instancedVS;
 	Shader *m_nonInstancedVS;
@@ -71,6 +81,8 @@ private:
 	void PrepareVOs();
 	void PrepareVAOs();
 	void PrepareVBOs();
+	void PrepareUBOs();
+	void PrepareTimers();
 	void PrepareShaders();
 	void PreparePrograms();
 	void PrepareMeshData();

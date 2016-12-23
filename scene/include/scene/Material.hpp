@@ -26,8 +26,8 @@ public:
 
 
 private:
-    MaterialId id;
     Vector3 diffuse_colour;
+    MaterialId id;
     Vector3 specular_colour;
     float shininess;
 
