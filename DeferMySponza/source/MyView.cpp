@@ -35,22 +35,25 @@ struct MyView::Vertex {
 	glm::vec2 textureCoordinate;
 };
 
+struct MyView::Instance {
+	glm::mat4 transform;
+	GLint material;
+};
+
 struct MyView::InstanceVOs {
 	VertexArrayObject vao = VertexArrayObject();
-	VertexBufferObject vbo[4] = {
+	VertexBufferObject vbo[3] = {
 		VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),	///	Elements
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW),			///	Vertices
-		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW),			///	Materials
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW)				///	Instances
 	};
 };
 
 struct MyView::NonStaticVOs {
 	VertexArrayObject vao = VertexArrayObject();
-	VertexBufferObject vbo[4] = {
+	VertexBufferObject vbo[3] = {
 		VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),	///	Elements
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW),			///	Vertices
-		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW),			///	Materials
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW)			///	Instances
 	};
 };
@@ -61,8 +64,7 @@ struct MyView::NonInstanceVOs {
 		VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),	///	Elements
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW)				///	Vertices
 	};
-	std::vector<GLint> materials;
-	std::vector<glm::mat4> instances;
+	std::vector<Instance> instances;
 };
 
 #pragma endregion
@@ -177,12 +179,11 @@ void MyView::PrepareVAOs() {
 	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 	m_instancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 	m_instancedVOs->vbo[Buffer::Instance].SetActive();
-	m_instancedVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE);
-	m_instancedVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
-	m_instancedVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
-	m_instancedVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
-	m_instancedVOs->vbo[Buffer::Material].SetActive();
-	m_instancedVOs->vao.AddAttributeDivisor<GLint>(1, GL_UNSIGNED_INT, GL_FALSE);
+	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
+	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
+	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
+	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
+	m_instancedVOs->vao.AddAttributeDivisor<Instance>(1, GL_INT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
 
 	m_nonStaticVOs->vao.SetActive();
 	m_nonStaticVOs->vbo[Buffer::Element].SetActive();
@@ -191,12 +192,12 @@ void MyView::PrepareVAOs() {
 	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 	m_nonStaticVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 	m_nonStaticVOs->vbo[Buffer::Instance].SetActive();
-	m_nonStaticVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE);
-	m_nonStaticVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
-	m_nonStaticVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
-	m_nonStaticVOs->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
-	m_nonStaticVOs->vbo[Buffer::Material].SetActive();
-	m_nonStaticVOs->vao.AddAttributeDivisor<GLint>(1, GL_UNSIGNED_INT, GL_FALSE);
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(1, GL_INT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
+	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
 
 	m_nonInstancedVOs->vao.SetActive();
 	m_nonInstancedVOs->vbo[Buffer::Element].SetActive();
@@ -213,37 +214,30 @@ void MyView::PrepareVAOs() {
 void MyView::PrepareVBOs() {
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> elements;
-	std::vector<GLint> materials;
-	std::vector<glm::mat4> instances;
+	std::vector<Instance> instances;
 
-	PrepareVertexData(m_instancedMeshes, vertices, elements, materials, instances);
+	PrepareVertexData(m_instancedMeshes, vertices, elements, instances);
 	m_instancedVOs->vbo[Buffer::Vertex].BufferData(vertices);
 	m_instancedVOs->vbo[Buffer::Element].BufferData(elements);
-	m_instancedVOs->vbo[Buffer::Material].BufferData(materials);
 	m_instancedVOs->vbo[Buffer::Instance].BufferData(instances);
 	vertices.clear();
 	elements.clear();
-	materials.clear();
 	instances.clear();
 
-	PrepareVertexData(m_nonStaticMeshes, vertices, elements, materials, instances);
+	PrepareVertexData(m_nonStaticMeshes, vertices, elements, instances);
 	m_nonStaticVOs->vbo[Buffer::Vertex].BufferData(vertices);
 	m_nonStaticVOs->vbo[Buffer::Element].BufferData(elements);
-	m_nonStaticVOs->vbo[Buffer::Material].BufferData(materials);
 	m_nonStaticVOs->vbo[Buffer::Instance].BufferData(instances);
 	vertices.clear();
 	elements.clear();
-	materials.clear();
 	instances.clear();
 
-	PrepareVertexData(m_nonInstancedMeshes, vertices, elements, materials, instances);
+	PrepareVertexData(m_nonInstancedMeshes, vertices, elements, instances);
 	m_nonInstancedVOs->vbo[Buffer::Vertex].BufferData(vertices);
 	m_nonInstancedVOs->vbo[Buffer::Element].BufferData(elements);
-	m_nonInstancedVOs->materials = materials;
 	m_nonInstancedVOs->instances = instances;
 	vertices.clear();
 	elements.clear();
-	materials.clear();
 	instances.clear();
 }
 
@@ -268,8 +262,7 @@ void MyView::PreparePrograms() {
 	m_instancedProgram->AddInAttribute("vertex_normal");
 	m_instancedProgram->AddInAttribute("vertex_texture_coordinate");
 
-	m_instancedProgram->AddInAttribute("model_transform");
-	m_instancedProgram->AddInAttribute("model_material");
+	m_instancedProgram->AddInAttribute("model");
 
 	m_instancedProgram->AddOutAttribute("fragment_colour");
 
@@ -318,7 +311,7 @@ void MyView::PrepareMeshData() {
 	std::cout << std::endl;
 }
 
-void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<GLint> &materials, std::vector<glm::mat4> &instances) {
+void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
 	scene::GeometryBuilder builder;
 	for (Mesh &m : meshData) {
 		const auto &mesh = builder.getMeshById(m.id);
@@ -359,8 +352,10 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 		const auto &meshInstances = scene_->getInstancesByMeshId(m.id);
 		for (const auto &instanceID : meshInstances) {
 			const auto &instance = scene_->getInstanceById(instanceID);
-			materials.push_back(instance.getMaterialId());
-			instances.push_back(glm::mat4((const glm::mat4x3&)instance.getTransformationMatrix()));
+			Instance i;
+			i.transform = glm::mat4((const glm::mat4x3&)instance.getTransformationMatrix());
+			i.material = instance.getMaterialId();
+			instances.push_back(i);
 		}
 		m.instanceCount = meshInstances.size();
 	}
@@ -394,11 +389,11 @@ void MyView::RenderEnvironment() {
 	for (GLuint i = 0; i < count; i++) {
 		const Mesh &mesh = m_nonInstancedMeshes[i];
 
-		GLuint model_material = m_nonInstancedVOs->materials[i];
+		GLuint model_material = m_nonInstancedVOs->instances[i].material;
 		GLint id = glGetUniformLocation(m_nonInstancedProgram->getID(), "model_material");
 		glUniform1i(id, model_material);
 
-		glm::mat4 model_transform = m_nonInstancedVOs->instances[i];
+		glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
 		m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, model_transform, "model_transform");
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
@@ -416,11 +411,14 @@ void MyView::UpdateViewTransform() {
 }
 
 void MyView::UpdateNonStaticTransforms() {
-	std::vector<glm::mat4> instances;
+	std::vector<Instance> instances;
 	for (const Mesh &mesh : m_nonStaticMeshes) {
 		for (const GLuint &id : scene_->getInstancesByMeshId(mesh.id)) {
 			const auto &instance = scene_->getInstanceById(id);
-			instances.push_back((const glm::mat4x3&)instance.getTransformationMatrix());
+			Instance i;
+			i.transform = (const glm::mat4x3&)instance.getTransformationMatrix();
+			i.material = instance.getMaterialId();
+			instances.push_back(i);
 		}
 	}
 	m_nonStaticVOs->vbo[Buffer::Instance].BufferData(instances);

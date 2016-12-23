@@ -30,6 +30,7 @@ private:
 #pragma region Structs
 	struct Mesh;
 	struct Vertex;
+	struct Instance;
 
 	struct InstanceVOs;
 	struct NonStaticVOs;
@@ -73,7 +74,7 @@ private:
 	void PrepareShaders();
 	void PreparePrograms();
 	void PrepareMeshData();
-	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<GLint> &materials, std::vector<glm::mat4> &instances);
+	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances);
 #pragma endregion
 #pragma region Render Methods
 	void RenderEnvironment();
