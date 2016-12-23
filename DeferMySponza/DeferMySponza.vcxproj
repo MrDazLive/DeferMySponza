@@ -321,6 +321,7 @@
     <ClCompile Include="source\MyView.cpp" />
     <ClCompile Include="source\rendering\Shader.cpp" />
     <ClCompile Include="source\rendering\ShaderProgram.cpp" />
+    <ClCompile Include="source\rendering\Texture.cpp" />
     <ClCompile Include="source\rendering\VertexArrayObject.cpp" />
     <ClCompile Include="source\rendering\VertexBufferObject.cpp" />
     <ClCompile Include="source\utilities\TimeQuery.cpp" />
@@ -331,6 +332,7 @@
     <ClInclude Include="source\rendering\enums\Buffer.h" />
     <ClInclude Include="source\rendering\Shader.h" />
     <ClInclude Include="source\rendering\ShaderProgram.h" />
+    <ClInclude Include="source\rendering\Texture.h" />
     <ClInclude Include="source\rendering\VertexArrayObject.h" />
     <ClInclude Include="source\rendering\VertexBufferObject.h" />
     <ClInclude Include="source\utilities\TimeQuery.h" />

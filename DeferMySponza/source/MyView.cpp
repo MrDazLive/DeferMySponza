@@ -10,6 +10,7 @@
 #include <cassert>
 
 #include "rendering\Shader.h"
+#include "rendering\Texture.h"
 #include "rendering\ShaderProgram.h"
 #include "rendering\VertexArrayObject.h"
 #include "rendering\VertexBufferObject.h"
@@ -116,6 +117,7 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonInstancedVOs;
 
 	delete m_materialUBO;
+	delete m_texture;
 
 	delete m_instancedProgram;
 	delete m_nonInstancedProgram;
@@ -195,6 +197,7 @@ void MyView::PrepareVOs() {
 	PrepareVBOs();
 	PrepareUBOs();
 
+	PrepareTextures();
 	PrepareShaders();
 	PreparePrograms();
 }
@@ -310,6 +313,13 @@ void MyView::PreparePrograms() {
 
 	m_instancedProgram->BindBlock(m_materialUBO, "block_material");
 
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_texture->getID());
+		GLuint texture_id = glGetUniformLocation(m_instancedProgram->getID(), "wall_texture");
+		glUniform1i(texture_id, 0);
+	}
+
 	m_nonInstancedProgram = new ShaderProgram();
 
 	m_nonInstancedProgram->AddShader(m_nonInstancedVS);
@@ -324,6 +334,13 @@ void MyView::PreparePrograms() {
 	m_nonInstancedProgram->Link();
 
 	m_nonInstancedProgram->BindBlock(m_materialUBO, "block_material");
+
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_texture->getID());
+		GLuint texture_id = glGetUniformLocation(m_nonInstancedProgram->getID(), "wall_texture");
+		glUniform1i(texture_id, 0);
+	}
 }
 
 void MyView::PrepareMeshData() {
@@ -353,6 +370,11 @@ void MyView::PrepareMeshData() {
 	std::cout << "Unique Meshes: " << m_nonInstancedMeshes.size() << " || ";
 	std::cout << "Non Static Meshes: " << m_nonStaticMeshes.size() << std::endl;
 	std::cout << std::endl;
+}
+
+void MyView::PrepareTextures() {
+	m_texture = new Texture(GL_TEXTURE_2D);
+	m_texture->LoadFile("content:///wall.png");
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {

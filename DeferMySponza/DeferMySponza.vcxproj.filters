@@ -58,6 +58,9 @@
     <ClCompile Include="source\utilities\TimeQuery.cpp">
       <Filter>Source Files\Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="source\rendering\Texture.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">
@@ -83,6 +86,9 @@
     </ClInclude>
     <ClInclude Include="source\utilities\TimeQuery.h">
       <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\Texture.h">
+      <Filter>Header Files\Rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

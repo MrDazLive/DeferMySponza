@@ -11,6 +11,8 @@ layout (std140) uniform block_material {
 	Material material[7];
 };
 
+uniform	sampler2D wall_texture;
+
 in vec3 varying_position;
 in vec3 varying_normal;
 in vec2 varying_texture_coordinate;
@@ -37,12 +39,10 @@ void main(void) {
 	else
 		fragment_colour.rgb = vec3(0, 0, 0);
 
+	fragment_colour = texture(wall_texture, varying_texture_coordinate);
 
-	fragment_colour.rgb = material[varying_material - 200].diffuse;
-
-	//float val = (varying_material - 200) / 6;
-	//fragment_colour.rgb = vec3(val) + vec3(1);
-	//fragment_colour.rgb = varying_normal + vec3(1);
+	fragment_colour.rgb *= material[varying_material - 200].diffuse;
+	//fragment_colour.rgb += vec3(1);
 	//fragment_colour.rgb /= 2;
-	fragment_colour *= 0.7f;
+	//fragment_colour *= 0.7f;
 }

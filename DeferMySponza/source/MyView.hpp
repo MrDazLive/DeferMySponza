@@ -12,6 +12,7 @@ class VertexBufferObject;
 class VertexArrayObject;
 class ShaderProgram;
 class TimeQuery;
+class Texture;
 class Shader;
 
 class MyView : public tygra::WindowViewDelegate
@@ -49,6 +50,7 @@ private:
 	NonInstanceVOs *m_nonInstancedVOs;
 
 	VertexBufferObject *m_materialUBO;
+	Texture *m_texture;
 
 	std::vector<Mesh> m_instancedMeshes;
 	std::vector<Mesh> m_nonStaticMeshes;
@@ -86,6 +88,7 @@ private:
 	void PrepareShaders();
 	void PreparePrograms();
 	void PrepareMeshData();
+	void PrepareTextures();
 	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances);
 #pragma endregion
 #pragma region Render Methods
