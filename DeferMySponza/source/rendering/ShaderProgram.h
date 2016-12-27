@@ -32,7 +32,8 @@ public:
 	void AddInAttribute(const std::string name);
 	void AddOutAttribute(const std::string name);
 	void BindBlock(VertexBufferObject *vbo, const std::string name);
-	template <typename T> void BindUniform(std::function<void(GLint, GLsizei, GLboolean, const GLfloat *)> func, const T& value, const std::string name);
+	template <typename T> void BindUniformV3(const T& value, const std::string name);
+	template <typename T> void BindUniformM4(const T& value, const std::string name);
 #pragma endregion
 private:
 	GLuint m_id;
@@ -44,9 +45,15 @@ private:
 #pragma region Non-Static Methods
 
 template <typename T>
-void ShaderProgram::BindUniform(std::function<void(GLint, GLsizei, GLboolean, const GLfloat *)> func, const T& value, const std::string name) {
+void ShaderProgram::BindUniformV3(const T& value, const std::string name) {
 	GLint id = glGetUniformLocation(m_id, name.c_str());
-	func(id, 1, GL_FALSE, glm::value_ptr(value));
+	glUniform3f(id, value.x, value.y, value.z);
+}
+
+template <typename T>
+void ShaderProgram::BindUniformM4(const T& value, const std::string name) {
+	GLint id = glGetUniformLocation(m_id, name.c_str());
+	glUniformMatrix4fv(id, 1, GL_FALSE, glm::value_ptr(value));
 }
 
 #pragma endregion

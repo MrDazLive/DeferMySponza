@@ -370,10 +370,10 @@ void MyView::PrepareMeshData() {
 
 void MyView::PrepareTextures() {
 	GLuint mainTextureID[7];
-	std::string mainTexture[7] = { "content:///wall.png" };
+	std::string mainTexture[7] = { "content:///brick.png", "content:///wall.png", "content:///not_fabric.png" };
 	GLuint normalTextureID[7];
-	std::string normalTexture[7] = { "content:///wall_norm.png" };
-
+	std::string normalTexture[7] = { "content:///brick_norm.png", "content:///wall_norm.png", "content:///not_fabric_norm.png" };
+	
 	for (unsigned int i = 0; i < 7; i++) {
 		if (mainTexture[i].size() > 0) {
 			m_mainTexture[i] = new Texture(GL_TEXTURE_2D);
@@ -485,7 +485,8 @@ void MyView::RenderEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_instancedProgram->SetActive();
-	m_instancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
+	m_instancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	m_instancedProgram->BindUniformM4(combined_transform, "combined_transform");
 
 	m_queryInstancedDraw->Begin();
 	m_instancedVOs->vao.SetActive();
@@ -503,7 +504,8 @@ void MyView::RenderEnvironment() {
 	m_queryMovingDraw->End();
 
 	m_nonInstancedProgram->SetActive();
-	m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
+	m_nonInstancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	m_nonInstancedProgram->BindUniformM4(combined_transform, "combined_transform");
 
 	m_queryUniqueDraw->Begin();
 	m_nonInstancedVOs->vao.SetActive();
@@ -516,7 +518,7 @@ void MyView::RenderEnvironment() {
 		glUniform1i(id, model_material);
 
 		glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
-		m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, model_transform, "model_transform");
+		m_nonInstancedProgram->BindUniformM4(model_transform, "model_transform");
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}

@@ -53,11 +53,11 @@ void Material::setMainTextureId(int t) {
 }
 
 int Material::getNormalTextureId() const {
-	return main_texture_id;
+	return normal_texture_id;
 }
 
 void Material::setNormalTextureId(int t) {
-	main_texture_id = t;
+	normal_texture_id = t;
 }
 
 bool Material::isShiny() const

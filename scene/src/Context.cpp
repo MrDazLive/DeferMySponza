@@ -149,15 +149,15 @@ bool Context::readFile(std::string filepath)
         Vector3(0.4f, 0.4f, 0.8f)
     };
     float shininess[7] = { 0.f, 64.f, 128.f, 64.f, 0.f, 0.f };
-	int mainTexture[7] = { 0, 128, 128, 128, 128, 128, 128 };
-	int normalTexture[7] = { 0, 128, 128, 128, 128, 128, 128 };
+	int mainTexture[7] = { 1, 2, 128, 128, 128, 128, 128 };
+	int normalTexture[7] = { 0, 2, 128, 128, 128, 128, 128 };
     for (int j = 0; j<7; ++j) {
         Material new_material(200 + j);
         new_material.setDiffuseColour(diffuse_colours[j]);
         new_material.setSpecularColour(specular_colours[j]);
         new_material.setShininess(shininess[j]);
 		new_material.setMainTextureId(mainTexture[j]);
-		new_material.setNormalTextureId(mainTexture[j]);
+		new_material.setNormalTextureId(normalTexture[j]);
         materials_.push_back(new_material);
         for (int i = 0; i<numberOfShapes[j]; ++i) {
             int index = shapes[j][i];

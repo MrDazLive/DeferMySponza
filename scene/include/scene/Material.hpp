@@ -37,9 +37,8 @@ private:
     Vector3 specular_colour;
 	int main_texture_id{ 128 };
 
-
-	Vector2 padding;
-	int normal_texture_id{ 128 };
+	Vector2 pad{ 128, 128 };
+	unsigned int normal_texture_id{ 128 };
     MaterialId id;
 
 };
