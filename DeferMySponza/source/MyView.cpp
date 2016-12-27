@@ -117,7 +117,10 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonInstancedVOs;
 
 	delete m_materialUBO;
-	delete m_texture;
+
+	for (Texture *ptr : m_mainTexture) {
+		delete ptr;
+	}
 
 	delete m_instancedProgram;
 	delete m_nonInstancedProgram;
@@ -197,9 +200,10 @@ void MyView::PrepareVOs() {
 	PrepareVBOs();
 	PrepareUBOs();
 
-	PrepareTextures();
 	PrepareShaders();
 	PreparePrograms();
+
+	PrepareTextures();
 }
 
 void MyView::PrepareVAOs() {
@@ -313,13 +317,6 @@ void MyView::PreparePrograms() {
 
 	m_instancedProgram->BindBlock(m_materialUBO, "block_material");
 
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_texture->getID());
-		GLuint texture_id = glGetUniformLocation(m_instancedProgram->getID(), "wall_texture");
-		glUniform1i(texture_id, 0);
-	}
-
 	m_nonInstancedProgram = new ShaderProgram();
 
 	m_nonInstancedProgram->AddShader(m_nonInstancedVS);
@@ -334,13 +331,6 @@ void MyView::PreparePrograms() {
 	m_nonInstancedProgram->Link();
 
 	m_nonInstancedProgram->BindBlock(m_materialUBO, "block_material");
-
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_texture->getID());
-		GLuint texture_id = glGetUniformLocation(m_nonInstancedProgram->getID(), "wall_texture");
-		glUniform1i(texture_id, 0);
-	}
 }
 
 void MyView::PrepareMeshData() {
@@ -373,8 +363,60 @@ void MyView::PrepareMeshData() {
 }
 
 void MyView::PrepareTextures() {
-	m_texture = new Texture(GL_TEXTURE_2D);
-	m_texture->LoadFile("content:///wall.png");
+	GLuint mainTextureID[7];
+	std::string mainTexture[7] = { "content:///wall.png" };
+	GLuint normalTextureID[7];
+	std::string normalTexture[7] = { "content:///wall_norm.png" };
+
+	for (unsigned int i = 0; i < 7; i++) {
+		if (mainTexture[i].size() > 0) {
+			m_mainTexture[i] = new Texture(GL_TEXTURE_2D);
+			m_mainTexture[i]->LoadFile(mainTexture[i]);
+			mainTextureID[i] = m_mainTexture[i]->getID();
+		}
+
+		if (normalTexture[i].size() > 0) {
+			m_normalTexture[i] = new Texture(GL_TEXTURE_2D);
+			m_normalTexture[i]->LoadFile(normalTexture[i]);
+			normalTextureID[i] = m_normalTexture[i]->getID();
+		}
+	}
+
+	m_instancedProgram->SetActive();
+	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		std::string main = "mainTexture[" + std::to_string(i) + "]";
+		std::string normal = "normalTexture[" + std::to_string(i) + "]";
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, mainTextureID[i]);
+		GLuint main_id = glGetUniformLocation(m_instancedProgram->getID(), main.c_str());
+		glUniform1i(main_id, j);
+
+		j++;
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, normalTextureID[i]);
+		GLuint normal_id = glGetUniformLocation(m_instancedProgram->getID(), normal.c_str());
+		glUniform1i(normal_id, j);
+	}
+
+	m_nonInstancedProgram->SetActive();
+	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		std::string main = "mainTexture[" + std::to_string(i) + "]";
+		std::string normal = "normalTexture[" + std::to_string(i) + "]";
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, mainTextureID[i]);
+		GLuint main_id = glGetUniformLocation(m_nonInstancedProgram->getID(), main.c_str());
+		glUniform1i(main_id, j);
+
+		j++;
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, normalTextureID[i]);
+		GLuint normal_id = glGetUniformLocation(m_nonInstancedProgram->getID(), normal.c_str());
+		glUniform1i(normal_id, j);
+	}
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {

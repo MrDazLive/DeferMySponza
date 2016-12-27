@@ -120,40 +120,44 @@ bool Context::readFile(std::string filepath)
     int happyShapes[] = { 82 };
     int bunnyShapes[] = { 81 };
     int dragonShapes[] = { 83 };
-    int *shapes[6] = { redShapes, greenShapes, yellowShapes,
+    int *shapes[7] = { nullptr, redShapes, greenShapes, yellowShapes,
         happyShapes, bunnyShapes, dragonShapes };
     int numberOfShapes[] = {
+		0,
         sizeof(redShapes) / sizeof(int),
         sizeof(greenShapes) / sizeof(int),
         sizeof(yellowShapes) / sizeof(int),
         sizeof(happyShapes) / sizeof(int),
         sizeof(bunnyShapes) / sizeof(int),
         sizeof(dragonShapes) / sizeof(int) };
-    Vector3 diffuse_colours[6] = {
-        Vector3(1.f, 0.33f, 0.f),
+    Vector3 diffuse_colours[7] = {
+		Vector3(0.8f, 0.8f, 0.8f),
+		Vector3(1.f, 0.33f, 0.f),
         Vector3(0.2f, 0.8f, 0.2f),
         Vector3(0.8f, 0.8f, 0.2f),
         Vector3(0.8f, 0.4f, 0.4f),
         Vector3(0.4f, 0.8f, 0.4f),
         Vector3(0.4f, 0.4f, 0.8f)
     };
-    Vector3 specular_colours[6] = {
-        Vector3(0, 0, 0),
+    Vector3 specular_colours[7] = {
+		Vector3(0, 0, 0),
+		Vector3(0, 0, 0),
         Vector3(1, 1, 1),
         Vector3(0.8f, 0.8f, 0.2f),
         Vector3(0.8f, 0.4f, 0.4f),
         Vector3(0.4f, 0.8f, 0.4f),
         Vector3(0.4f, 0.4f, 0.8f)
     };
-    float shininess[6] = { 0.f, 64.f, 128.f, 64.f, 0.f, 0.f };
-    Material new_material(200);
-    new_material.setDiffuseColour(Vector3(0.8f, 0.8f, 0.8f));
-    materials_.push_back(new_material);
-    for (int j = 0; j<6; ++j) {
-        Material new_material(200 + j + 1);
+    float shininess[7] = { 0.f, 64.f, 128.f, 64.f, 0.f, 0.f };
+	int mainTexture[7] = { 0, 128, 128, 128, 128, 128, 128 };
+	int normalTexture[7] = { 0, 128, 128, 128, 128, 128, 128 };
+    for (int j = 0; j<7; ++j) {
+        Material new_material(200 + j);
         new_material.setDiffuseColour(diffuse_colours[j]);
         new_material.setSpecularColour(specular_colours[j]);
         new_material.setShininess(shininess[j]);
+		new_material.setMainTextureId(mainTexture[j]);
+		new_material.setNormalTextureId(mainTexture[j]);
         materials_.push_back(new_material);
         for (int i = 0; i<numberOfShapes[j]; ++i) {
             int index = shapes[j][i];

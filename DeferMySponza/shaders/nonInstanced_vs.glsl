@@ -12,7 +12,7 @@ out vec3 varying_position;
 out vec3 varying_normal;
 out vec2 varying_texture_coordinate;
 
-flat out int varying_material;
+flat out int fixed_material;
 
 void main(void) {
 	gl_Position = combined_transform * model_transform * vec4(vertex_position, 1.0);
@@ -20,5 +20,5 @@ void main(void) {
 	varying_normal = mat3(model_transform) * vertex_normal;
 	varying_texture_coordinate = vertex_texture_coordinate;
 
-	varying_material = model_material;
+	fixed_material = model_material - 200;
 }
