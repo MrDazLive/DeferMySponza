@@ -9,9 +9,10 @@ uniform mat4 combined_transform;
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_normal;
-layout(location = 2) in vec2 vertex_texture_coordinate;
+layout(location = 2) in vec3 vertex_tangent;
+layout(location = 3) in vec2 vertex_texture_coordinate;
 
-layout(location = 3) in Instance model;
+layout(location = 4) in Instance model;
 
 out vec3 varying_position;
 out vec3 varying_normal;

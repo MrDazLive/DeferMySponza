@@ -6,7 +6,8 @@ uniform int model_material;
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_normal;
-layout(location = 2) in vec2 vertex_texture_coordinate;
+layout(location = 2) in vec3 vertex_tangent;
+layout(location = 3) in vec2 vertex_texture_coordinate;
 
 out vec3 varying_position;
 out vec3 varying_normal;

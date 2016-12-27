@@ -35,6 +35,7 @@ struct MyView::Mesh {
 struct MyView::Vertex {
 	glm::vec3 positiion;
 	glm::vec3 normal;
+	glm::vec3 tangent;
 	glm::vec2 textureCoordinate;
 };
 
@@ -212,7 +213,8 @@ void MyView::PrepareVAOs() {
 	m_instancedVOs->vbo[Buffer::Vertex].SetActive();
 	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
 	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_instancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_instancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 	m_instancedVOs->vbo[Buffer::Instance].SetActive();
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
@@ -225,7 +227,8 @@ void MyView::PrepareVAOs() {
 	m_nonStaticVOs->vbo[Buffer::Vertex].SetActive();
 	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
 	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_nonStaticVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonStaticVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 	m_nonStaticVOs->vbo[Buffer::Instance].SetActive();
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
@@ -238,7 +241,8 @@ void MyView::PrepareVAOs() {
 	m_nonInstancedVOs->vbo[Buffer::Vertex].SetActive();
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -307,6 +311,7 @@ void MyView::PreparePrograms() {
 
 	m_instancedProgram->AddInAttribute("vertex_position");
 	m_instancedProgram->AddInAttribute("vertex_normal");
+	m_instancedProgram->AddInAttribute("vertex_tangent");
 	m_instancedProgram->AddInAttribute("vertex_texture_coordinate");
 
 	m_instancedProgram->AddInAttribute("model");
@@ -324,6 +329,7 @@ void MyView::PreparePrograms() {
 
 	m_nonInstancedProgram->AddInAttribute("vertex_position");
 	m_nonInstancedProgram->AddInAttribute("vertex_normal");
+	m_nonInstancedProgram->AddInAttribute("vertex_tangent");
 	m_nonInstancedProgram->AddInAttribute("vertex_texture_coordinate");
 
 	m_nonInstancedProgram->AddOutAttribute("fragment_colour");
@@ -435,6 +441,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 
 		const auto &positions = mesh.getPositionArray();
 		const auto &normals = mesh.getNormalArray();
+		const auto &tangents = mesh.getTangentArray();
 		const auto &textureCoordinates = mesh.getTextureCoordinateArray();
 
 		const unsigned int vertexCount = positions.size();
@@ -444,6 +451,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 				Vertex v;
 				v.positiion = (const glm::vec3&)positions[i];
 				v.normal = (const glm::vec3&)normals[i];
+				v.tangent = glm::vec3(0);
 				v.textureCoordinate = glm::vec2(0);
 				vertices.push_back(v);
 			}
@@ -452,6 +460,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 				Vertex v;
 				v.positiion = (const glm::vec3&)positions[i];
 				v.normal = (const glm::vec3&)normals[i];
+				v.tangent = (const glm::vec3&)tangents[i];
 				v.textureCoordinate = (const glm::vec2&)textureCoordinates[i];
 				vertices.push_back(v);
 			}
