@@ -61,6 +61,9 @@
     <ClCompile Include="source\rendering\Texture.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="source\rendering\FrameBufferObject.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">
@@ -89,6 +92,12 @@
     </ClInclude>
     <ClInclude Include="source\rendering\Texture.h">
       <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\FrameBufferObject.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\enums\Mode.h">
+      <Filter>Header Files\Rendering\Enums</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

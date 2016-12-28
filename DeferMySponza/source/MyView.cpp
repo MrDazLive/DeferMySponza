@@ -12,6 +12,7 @@
 #include "rendering\Shader.h"
 #include "rendering\Texture.h"
 #include "rendering\ShaderProgram.h"
+#include "rendering\FrameBufferObject.h"
 #include "rendering\VertexArrayObject.h"
 #include "rendering\VertexBufferObject.h"
 #include "rendering\enums\Buffer.h"
@@ -87,6 +88,10 @@ void MyView::setScene(const scene::Context * scene) {
     scene_ = scene;
 }
 
+void MyView::setMode(const Mode mode) {
+	m_renderMode = mode;
+}
+
 #pragma endregion
 #pragma region Window Methods
 
@@ -96,6 +101,10 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glBlendEquation(GL_FUNC_ADD);
+
+	glDepthMask(GL_TRUE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glClearColor(0.f, 0.f, 0.25f, 0.f);
 
 	PrepareVOs();
 	PrepareTimers();
@@ -113,12 +122,13 @@ void MyView::windowViewDidReset(tygra::Window * window,
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
+	delete m_fbo;
+
 	delete m_instancedVOs;
 	delete m_nonStaticVOs;
 	delete m_nonInstancedVOs;
 
 	delete m_materialUBO;
-
 	for (Texture *ptr : m_mainTexture) {
 		delete ptr;
 	}
@@ -139,22 +149,18 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 void MyView::windowViewRender(tygra::Window * window) {
     assert(scene_ != nullptr);
 
-	glDepthMask(GL_TRUE);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	glClearColor(0.f, 0.f, 0.25f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	UpdateViewTransform();
 
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
-	glDisable(GL_BLEND);
-
-	//m_queryFullDraw->Begin();
-	RenderEnvironment();
-	//m_queryFullDraw->End();
-
-	VertexArrayObject::Reset();
+	switch (m_renderMode) {
+	case Mode::Forward:
+		ForwardRender();
+		break;
+	case Mode::Deferred:
+		DeferredRender();
+		break;
+	default:
+		std::cerr << "No valid render mode selected." << std::endl;
+	}
 }
 
 #pragma endregion
@@ -197,6 +203,7 @@ void MyView::PrepareVOs() {
 
 	PrepareMeshData();
 
+	PrepareFBO();
 	PrepareVAOs();
 	PrepareVBOs();
 	PrepareUBOs();
@@ -205,6 +212,10 @@ void MyView::PrepareVOs() {
 	PreparePrograms();
 
 	PrepareTextures();
+}
+
+void MyView::PrepareFBO() {
+	m_fbo = new FrameBufferObject();
 }
 
 void MyView::PrepareVAOs() {
@@ -481,7 +492,20 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 #pragma endregion
 #pragma region Render Methods
 
-void MyView::RenderEnvironment() {
+void MyView::ForwardRender() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glDepthFunc(GL_LEQUAL);
+	glDisable(GL_BLEND);
+
+	//m_queryFullDraw->Begin();
+	ForwardRenderEnvironment();
+	//m_queryFullDraw->End();
+
+	VertexArrayObject::Reset();
+}
+
+void MyView::ForwardRenderEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_instancedProgram->SetActive();
@@ -523,6 +547,25 @@ void MyView::RenderEnvironment() {
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}
 	m_queryUniqueDraw->End();
+}
+
+void MyView::DeferredRender() {
+	m_fbo->SetWrite();
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDisable(GL_BLEND);
+
+	DeferredRenderEnvironment();
+
+	FrameBufferObject::Reset();
+}
+
+void MyView::DeferredRenderEnvironment() {
+
+	ForwardRenderEnvironment();
 }
 
 #pragma endregion

@@ -319,6 +319,7 @@
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\MyController.cpp" />
     <ClCompile Include="source\MyView.cpp" />
+    <ClCompile Include="source\rendering\FrameBufferObject.cpp" />
     <ClCompile Include="source\rendering\Shader.cpp" />
     <ClCompile Include="source\rendering\ShaderProgram.cpp" />
     <ClCompile Include="source\rendering\Texture.cpp" />
@@ -330,6 +331,8 @@
     <ClInclude Include="source\MyController.hpp" />
     <ClInclude Include="source\MyView.hpp" />
     <ClInclude Include="source\rendering\enums\Buffer.h" />
+    <ClInclude Include="source\rendering\enums\Mode.h" />
+    <ClInclude Include="source\rendering\FrameBufferObject.h" />
     <ClInclude Include="source\rendering\Shader.h" />
     <ClInclude Include="source\rendering\ShaderProgram.h" />
     <ClInclude Include="source\rendering\Texture.h" />

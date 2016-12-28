@@ -119,6 +119,12 @@ void MyController::windowControlKeyboardChanged(tygra::Window * window,
 	case tygra::kWindowKeyF4:
 		view_->ResetTimers();
 		break;
+	case tygra::kWindowKeyPad1:
+		view_->setMode(Mode::Forward);
+		break;
+	case tygra::kWindowKeyPad2:
+		view_->setMode(Mode::Deferred);
+		break;
     }
 }
 
