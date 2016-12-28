@@ -83,10 +83,8 @@ private:
 		Shader *m_meshFS{ nullptr };
 	#pragma endregion
 	#pragma region Time Queries
-		TimeQuery *m_queryFullDraw{ nullptr };
-		TimeQuery *m_queryInstancedDraw{ nullptr };
-		TimeQuery *m_queryMovingDraw{ nullptr };
-		TimeQuery *m_queryUniqueDraw{ nullptr };
+		TimeQuery *m_queryForwardRender{ nullptr };
+		TimeQuery *m_queryDeferredRender{ nullptr };
 	#pragma endregion
 #pragma endregion
 #pragma region Window Methods

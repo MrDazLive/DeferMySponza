@@ -147,10 +147,8 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonInstancedVS;
 	delete m_meshFS;
 
-	delete m_queryFullDraw;
-	delete m_queryInstancedDraw;
-	delete m_queryMovingDraw;
-	delete m_queryUniqueDraw;
+	delete m_queryForwardRender;
+	delete m_queryDeferredRender;
 }
 
 void MyView::windowViewRender(tygra::Window * window) {
@@ -174,18 +172,14 @@ void MyView::windowViewRender(tygra::Window * window) {
 #pragma region Additional Methods
 
 void MyView::LogTimers() {
-	std::cout << "Environemnt Draw: (" << m_queryFullDraw->toString() << ")" << std::endl;
-	std::cout << "Instanced Draw: (" << m_queryInstancedDraw->toString() << ")" << std::endl;
-	std::cout << "Moving Draw: (" << m_queryMovingDraw->toString() << ")" << std::endl;
-	std::cout << "Unique Draw: (" << m_queryUniqueDraw->toString() << ")" << std::endl;
+	std::cout << "Forward Rendering: (" << m_queryForwardRender->toString() << ")" << std::endl;
+	std::cout << "Deferred Rendering: (" << m_queryDeferredRender->toString() << ")" << std::endl;
 	std::cout << std::endl;
 }
 
 void MyView::ResetTimers() {
-	m_queryFullDraw->Reset();
-	m_queryInstancedDraw->Reset();
-	m_queryMovingDraw->Reset();
-	m_queryUniqueDraw->Reset();
+	m_queryForwardRender->Reset();
+	m_queryDeferredRender->Reset();
 }
 
 void MyView::ReloadShaders() {
@@ -299,10 +293,8 @@ void MyView::PrepareUBOs() {
 }
 
 void MyView::PrepareTimers() {
-	m_queryFullDraw = new TimeQuery();
-	m_queryInstancedDraw = new TimeQuery();
-	m_queryMovingDraw = new TimeQuery();
-	m_queryUniqueDraw = new TimeQuery();
+	m_queryForwardRender = new TimeQuery();
+	m_queryDeferredRender = new TimeQuery();
 }
 
 void MyView::PrepareShaders() {
@@ -374,11 +366,6 @@ void MyView::PrepareMeshData() {
 				m_nonInstancedMeshes.push_back(m):
 			m_nonStaticMeshes.push_back(m);
 	}
-
-	std::cout << "Instanced Meshes: " << m_instancedMeshes.size() << " || ";
-	std::cout << "Unique Meshes: " << m_nonInstancedMeshes.size() << " || ";
-	std::cout << "Non Static Meshes: " << m_nonStaticMeshes.size() << std::endl;
-	std::cout << std::endl;
 }
 
 void MyView::PrepareTextures() {
@@ -448,8 +435,6 @@ void MyView::PrepareGBs(const float width, const float height) {
 	m_gbuffer = new Texture(GL_TEXTURE_2D);
 	m_gbuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0, m_gbuffer);
-
-	m_fbo->LogInfo();
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
@@ -509,16 +494,18 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 #pragma region Render Methods
 
 void MyView::ForwardRender() {
+	m_queryForwardRender->Begin();
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//m_queryFullDraw->Begin();
 	DrawEnvironment();
-	//m_queryFullDraw->End();
 
-	VertexArrayObject::Reset();
+	m_queryForwardRender->End();
 }
 
 void MyView::DeferredRender() {
+	m_queryDeferredRender->Begin();
+
 	m_fbo->SetDraw();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -526,6 +513,8 @@ void MyView::DeferredRender() {
 	DrawEnvironment();
 
 	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
+
+	m_queryDeferredRender->End();
 }
 
 void MyView::DrawEnvironment() {
@@ -535,26 +524,21 @@ void MyView::DrawEnvironment() {
 	m_instancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
 	m_instancedProgram->BindUniformM4(combined_transform, "combined_transform");
 
-	m_queryInstancedDraw->Begin();
 	m_instancedVOs->vao.SetActive();
 	for (const Mesh& mesh : m_instancedMeshes) {
 		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
 	}
-	m_queryInstancedDraw->End();
 
-	m_queryMovingDraw->Begin();
 	UpdateNonStaticTransforms();
 	m_nonStaticVOs->vao.SetActive();
 	for (const Mesh& mesh : m_nonStaticMeshes) {
 		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
 	}
-	m_queryMovingDraw->End();
 
 	m_nonInstancedProgram->SetActive();
 	m_nonInstancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
 	m_nonInstancedProgram->BindUniformM4(combined_transform, "combined_transform");
 
-	m_queryUniqueDraw->Begin();
 	m_nonInstancedVOs->vao.SetActive();
 	GLuint count = m_nonInstancedMeshes.size();
 	for (GLuint i = 0; i < count; i++) {
@@ -569,7 +553,8 @@ void MyView::DrawEnvironment() {
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}
-	m_queryUniqueDraw->End();
+
+	VertexArrayObject::Reset();
 }
 
 #pragma endregion

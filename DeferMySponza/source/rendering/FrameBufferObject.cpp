@@ -46,6 +46,7 @@ void FrameBufferObject::LogInfo(const FrameBufferObject *fbo) {
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	std::cerr << "FrameBuffer Status: 0x" << std::hex << status << std::endl;
+
 	FrameBufferObject::Reset();
 }
 
