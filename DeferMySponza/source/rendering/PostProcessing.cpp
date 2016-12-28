@@ -31,10 +31,6 @@ PostProcessing::PostProcessing(std::string vs, std::string fs) {
 	m_fbo = new FrameBufferObject();
 	m_fbo->SetActive();
 
-	m_tex = new Texture(GL_TEXTURE_RECTANGLE);
-	m_tex->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0, m_tex);
-
 	m_vs = new Shader(GL_VERTEX_SHADER);
 	m_vs->LoadFile(vs);
 	m_fs = new Shader(GL_FRAGMENT_SHADER);
@@ -62,7 +58,8 @@ PostProcessing::~PostProcessing() {
 #pragma region Getters/Setters
 
 void PostProcessing::setSourceTexture(Texture *texture) {
-	m_sTexture = texture;
+	m_tex = texture;
+	m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0, m_tex);
 }
 
 void PostProcessing::setTextureSize(const GLsizei width, const GLsizei height) {
@@ -82,10 +79,8 @@ void PostProcessing::Draw() {
 	m_pro->SetActive();
 	m_vao->SetActive();
 
-	m_pro->BindUniformTexture(m_sTexture, "frame");
+	m_pro->BindUniformTexture(m_tex, "frame");
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	m_fbo->BlitTexture(m_tex, m_width, m_height);
 
 	VertexArrayObject::Reset();
 }

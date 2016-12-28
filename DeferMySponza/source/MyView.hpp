@@ -34,6 +34,7 @@ public:
 	void LogTimers();
 	void ResetTimers();
 	void ReloadShaders();
+	void TogglePostProcessing();
 #pragma endregion
 private:
 #pragma region Structs
@@ -52,6 +53,7 @@ private:
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
+		GLboolean m_usePostProcessing{ true };
 		Mode m_renderMode{ Mode::Deferred };
 	#pragma endregion
 	#pragma region Geometry Objects

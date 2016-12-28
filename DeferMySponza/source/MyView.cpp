@@ -167,7 +167,7 @@ void MyView::windowViewRender(tygra::Window * window) {
 		break;
 	case Mode::Deferred:
 		DeferredRender();
-		PostProcessRender();
+		if(m_usePostProcessing) PostProcessRender();
 		break;
 	default:
 		std::cerr << "No valid render mode selected." << std::endl;
@@ -200,6 +200,10 @@ void MyView::ReloadShaders() {
 		delete m_nonInstancedProgram;
 		PreparePrograms();
 	}
+}
+
+void MyView::TogglePostProcessing() {
+	m_usePostProcessing = !m_usePostProcessing;
 }
 
 #pragma endregion
@@ -517,6 +521,8 @@ void MyView::PostProcessRender() {
 	m_queryPostProcessing->Begin();
 
 	m_pp->Draw();
+
+	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
 
 	m_queryPostProcessing->End();
 }

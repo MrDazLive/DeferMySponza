@@ -32,6 +32,7 @@ void MyController::windowControlWillStart(tygra::Window * window)
     std::cout << "Real-Time Graphics :: DeferMySponza" << std::endl;
 	std::cout << "  Press NumPad1 to switch to forward rendering" << std::endl;
 	std::cout << "  Press NumPad2 to switch to deferred rendering" << std::endl;
+	std::cout << "  Press NumPad3 to switch to toggle post-processing" << std::endl;
 
 	std::cout << "  Press F2 to toggle an animated camera" << std::endl;
 	std::cout << "  Press F3 to display draw timers" << std::endl;
@@ -127,6 +128,9 @@ void MyController::windowControlKeyboardChanged(tygra::Window * window,
 		break;
 	case tygra::kWindowKeyPad2:
 		view_->setMode(Mode::Deferred);
+		break;
+	case tygra::kWindowKeyPad3:
+		view_->TogglePostProcessing();
 		break;
     }
 }

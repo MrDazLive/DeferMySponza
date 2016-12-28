@@ -35,8 +35,6 @@ private:
 	Shader *m_vs{ nullptr };
 	Shader *m_fs{ nullptr };
 
-	Texture *m_sTexture;
-
 	GLsizei m_width{ 0 };
 	GLsizei m_height{ 0 };
 };
