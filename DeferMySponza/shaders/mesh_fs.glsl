@@ -29,7 +29,7 @@ in vec2 varying_texture_coordinate;
 
 flat in int fixed_material;
 
-out vec4 fragment_colour;
+layout(location = 0)out vec3 fragment_colour;
 
 vec3 light_dir = vec3(1, .5f, -1);
 
@@ -70,11 +70,11 @@ void main(void) {
 		vec3 normal = bumpNormal(coord);
 		float i = clamp(dot(normal, normalize(light_dir)), 0, 1);
 
-		fragment_colour = mT * vec4(material[fixed_material].diffuse, 0) * i;
+		fragment_colour = (mT * vec4(material[fixed_material].diffuse, 0) * i).xyz;
 	} else {
 		vec3 normal = varying_normal;
 		float i = clamp(dot(normal, normalize(light_dir)), 0, 1);
-
-		fragment_colour = vec4(material[fixed_material].diffuse, 0) * i;
+		
+		fragment_colour = material[fixed_material].diffuse * i;
 	}
 }

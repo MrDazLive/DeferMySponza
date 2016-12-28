@@ -114,23 +114,22 @@ void MyView::windowViewDidReset(tygra::Window * window,
                                 int width,
                                 int height) {
     glViewport(0, 0, width, height);
+	view_size = glm::vec2(width, height);
 
-	const float aspect_ratio = width / height;
+	const float aspect_ratio = (float)width / (float)height;
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
 
 	delete m_fbo;
-	for (Texture *ptr : m_gbuffer) {
-		delete ptr;
-	}
+	delete m_dbuffer;
+	delete m_gbuffer;
 
 	PrepareGBs(width, height);
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_fbo;
-	for (Texture *ptr : m_gbuffer) {
-		delete ptr;
-	}
+	delete m_dbuffer;
+	delete m_gbuffer;
 
 	delete m_instancedVOs;
 	delete m_nonStaticVOs;
@@ -219,21 +218,6 @@ void MyView::PrepareVOs() {
 	PreparePrograms();
 
 	PrepareTextures();
-}
-
-void MyView::PrepareGBs(const float width, const float height) {
-	m_fbo = new FrameBufferObject();
-
-	for (unsigned int i = 0; i < 4; i++) {
-		m_gbuffer[i] = new Texture(GL_TEXTURE_2D);
-		m_gbuffer[i]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-		m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0 + i, m_gbuffer[i]);
-	}
-
-	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-	glDrawBuffers(4, drawBuffers);
-
-	m_fbo->LogInfo();
 }
 
 void MyView::PrepareVAOs() {
@@ -454,6 +438,20 @@ void MyView::PrepareTextures() {
 	}
 }
 
+void MyView::PrepareGBs(const float width, const float height) {
+	m_fbo = new FrameBufferObject();
+
+	m_dbuffer = new Texture(GL_TEXTURE_2D);
+	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, width, height, GL_DEPTH_COMPONENT, GL_FLOAT);
+	m_fbo->AttachTexture(GL_DEPTH_ATTACHMENT, m_dbuffer);
+
+	m_gbuffer = new Texture(GL_TEXTURE_2D);
+	m_gbuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0, m_gbuffer);
+
+	m_fbo->LogInfo();
+}
+
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
 	scene::GeometryBuilder builder;
 	for (Mesh &m : meshData) {
@@ -513,17 +511,24 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 void MyView::ForwardRender() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glDepthFunc(GL_LEQUAL);
-	glDisable(GL_BLEND);
-
 	//m_queryFullDraw->Begin();
-	ForwardRenderEnvironment();
+	DrawEnvironment();
 	//m_queryFullDraw->End();
 
 	VertexArrayObject::Reset();
 }
 
-void MyView::ForwardRenderEnvironment() {
+void MyView::DeferredRender() {
+	m_fbo->SetDraw();
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	DrawEnvironment();
+
+	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
+}
+
+void MyView::DrawEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_instancedProgram->SetActive();
@@ -565,24 +570,6 @@ void MyView::ForwardRenderEnvironment() {
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}
 	m_queryUniqueDraw->End();
-}
-
-void MyView::DeferredRender() {
-	m_fbo->SetDraw();
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glDepthFunc(GL_LEQUAL);
-	glDisable(GL_BLEND);
-
-	DeferredRenderEnvironment();
-
-	FrameBufferObject::Reset();
-}
-
-void MyView::DeferredRenderEnvironment() {
-
-	ForwardRenderEnvironment();
 }
 
 #pragma endregion

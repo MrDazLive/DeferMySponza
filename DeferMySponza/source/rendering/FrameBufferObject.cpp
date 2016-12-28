@@ -68,6 +68,16 @@ void FrameBufferObject::LogInfo() {
 	FrameBufferObject::LogInfo(this);
 }
 
+void FrameBufferObject::BlitTexture(const Texture *texture, const GLuint width, const GLuint height, GLuint target) {
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target);
+	this->SetRead();
+
+	glReadBuffer(texture->getTarget());
+	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	FrameBufferObject::Reset();
+}
+
 void FrameBufferObject::AttachTexture(GLenum attatchment, const Texture *texture) {
 	this->SetDraw();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attatchment, texture->getTarget(), texture->getID(), 0);

@@ -25,6 +25,7 @@ public:
 	void SetDraw();
 	void SetRead();
 	void LogInfo();
+	void BlitTexture(const Texture *texture, const GLuint width, const GLuint height, GLuint target = 0);
 	void AttachTexture(GLenum attatchment, const Texture *texture);
 #pragma endregion
 private:

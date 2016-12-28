@@ -47,6 +47,7 @@ private:
 #pragma region Members
 	#pragma region General
 		const scene::Context *scene_;
+		glm::vec2 view_size;
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
@@ -54,7 +55,8 @@ private:
 	#pragma endregion
 	#pragma region Geometry Objects
 		FrameBufferObject *m_fbo{ nullptr };
-		Texture *m_gbuffer[4]{ nullptr };
+		Texture *m_dbuffer{ nullptr };
+		Texture *m_gbuffer{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
 		InstanceVOs *m_instancedVOs{ nullptr };
@@ -113,10 +115,9 @@ private:
 #pragma endregion
 #pragma region Render Methods
 	void ForwardRender();
-	void ForwardRenderEnvironment();
-
 	void DeferredRender();
-	void DeferredRenderEnvironment();
+
+	void DrawEnvironment();
 #pragma endregion
 #pragma region Additional Methods
 	void UpdateViewTransform();
