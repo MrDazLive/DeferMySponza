@@ -19,6 +19,7 @@ public:
 #pragma endregion
 #pragma region Non-Static Methods
 	void SetActive();
+	void Buffer(GLint internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data = nullptr);
 	void LoadFile(const std::string &name);
 #pragma endregion
 private:

@@ -115,14 +115,22 @@ void MyView::windowViewDidReset(tygra::Window * window,
                                 int height) {
     glViewport(0, 0, width, height);
 
-	GLint viewport[4];
-	glGetIntegerv(GL_VIEWPORT, viewport);
-	const float aspect_ratio = viewport[2] / (float)viewport[3];
+	const float aspect_ratio = width / height;
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
+
+	delete m_fbo;
+	for (Texture *ptr : m_gbuffer) {
+		delete ptr;
+	}
+
+	PrepareGBs(width, height);
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_fbo;
+	for (Texture *ptr : m_gbuffer) {
+		delete ptr;
+	}
 
 	delete m_instancedVOs;
 	delete m_nonStaticVOs;
@@ -203,7 +211,6 @@ void MyView::PrepareVOs() {
 
 	PrepareMeshData();
 
-	PrepareFBO();
 	PrepareVAOs();
 	PrepareVBOs();
 	PrepareUBOs();
@@ -214,8 +221,19 @@ void MyView::PrepareVOs() {
 	PrepareTextures();
 }
 
-void MyView::PrepareFBO() {
+void MyView::PrepareGBs(const float width, const float height) {
 	m_fbo = new FrameBufferObject();
+
+	for (unsigned int i = 0; i < 4; i++) {
+		m_gbuffer[i] = new Texture(GL_TEXTURE_2D);
+		m_gbuffer[i]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+		m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0 + i, m_gbuffer[i]);
+	}
+
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, drawBuffers);
+
+	m_fbo->LogInfo();
 }
 
 void MyView::PrepareVAOs() {
@@ -550,11 +568,10 @@ void MyView::ForwardRenderEnvironment() {
 }
 
 void MyView::DeferredRender() {
-	m_fbo->SetWrite();
+	m_fbo->SetDraw();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
 	glDisable(GL_BLEND);
 

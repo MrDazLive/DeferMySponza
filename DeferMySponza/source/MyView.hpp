@@ -51,18 +51,20 @@ private:
 		glm::mat4 projection_transform;
 
 		Mode m_renderMode{ Mode::Deferred };
-
-		FrameBufferObject *m_fbo;
+	#pragma endregion
+	#pragma region Geometry Objects
+		FrameBufferObject *m_fbo{ nullptr };
+		Texture *m_gbuffer[4]{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
-		InstanceVOs *m_instancedVOs;
-		NonStaticVOs *m_nonStaticVOs;
-		NonInstanceVOs *m_nonInstancedVOs;
+		InstanceVOs *m_instancedVOs{ nullptr };
+		NonStaticVOs *m_nonStaticVOs{ nullptr };
+		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
-		VertexBufferObject *m_materialUBO;
-		Texture *m_mainTexture[7];
-		Texture *m_normalTexture[7];
+		VertexBufferObject *m_materialUBO{ nullptr };
+		Texture *m_mainTexture[7]{ nullptr };
+		Texture *m_normalTexture[7]{ nullptr };
 	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
@@ -70,19 +72,19 @@ private:
 		std::vector<Mesh> m_nonInstancedMeshes;
 	#pragma endregion
 	#pragma region Shader Programs
-		ShaderProgram *m_instancedProgram;
-		ShaderProgram *m_nonInstancedProgram;
+		ShaderProgram *m_instancedProgram{ nullptr };
+		ShaderProgram *m_nonInstancedProgram{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
-		Shader *m_instancedVS;
-		Shader *m_nonInstancedVS;
-		Shader *m_meshFS;
+		Shader *m_instancedVS{ nullptr };
+		Shader *m_nonInstancedVS{ nullptr };
+		Shader *m_meshFS{ nullptr };
 	#pragma endregion
 	#pragma region Time Queries
-		TimeQuery *m_queryFullDraw;
-		TimeQuery *m_queryInstancedDraw;
-		TimeQuery *m_queryMovingDraw;
-		TimeQuery *m_queryUniqueDraw;
+		TimeQuery *m_queryFullDraw{ nullptr };
+		TimeQuery *m_queryInstancedDraw{ nullptr };
+		TimeQuery *m_queryMovingDraw{ nullptr };
+		TimeQuery *m_queryUniqueDraw{ nullptr };
 	#pragma endregion
 #pragma endregion
 #pragma region Window Methods
@@ -98,7 +100,6 @@ private:
 #pragma endregion
 #pragma region Setup Methods
 	void PrepareVOs();
-	void PrepareFBO();
 	void PrepareVAOs();
 	void PrepareVBOs();
 	void PrepareUBOs();
@@ -107,6 +108,7 @@ private:
 	void PreparePrograms();
 	void PrepareMeshData();
 	void PrepareTextures();
+	void PrepareGBs(const float width, const float height);
 	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances);
 #pragma endregion
 #pragma region Render Methods

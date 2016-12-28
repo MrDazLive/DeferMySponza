@@ -1,6 +1,9 @@
 #include "FrameBufferObject.h"
 
 #include <tgl\tgl.h>
+#include <iostream>
+
+#include "Texture.h"
 
 #pragma region Constructors/Destructors
 
@@ -22,22 +25,28 @@ GLuint FrameBufferObject::getID() const {
 #pragma endregion
 #pragma region Static Methods
 
-void FrameBufferObject::Reset() {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+void FrameBufferObject::Reset(GLenum target) {
+	glBindFramebuffer(target, 0);
 }
 
 void FrameBufferObject::SetActive(const FrameBufferObject *fbo) {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo->getID());
 }
 
-void FrameBufferObject::SetWrite(const FrameBufferObject *fbo) {
+void FrameBufferObject::SetDraw(const FrameBufferObject *fbo) {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo->getID());
 }
 
 void FrameBufferObject::SetRead(const FrameBufferObject *fbo) {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo->getID());
+}
+
+void FrameBufferObject::LogInfo(const FrameBufferObject *fbo) {
+	FrameBufferObject::SetActive(fbo);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	std::cerr << "FrameBuffer Status: 0x" << std::hex << status << std::endl;
+	FrameBufferObject::Reset();
 }
 
 #pragma endregion
@@ -47,12 +56,22 @@ void FrameBufferObject::SetActive() {
 	FrameBufferObject::SetActive(this);
 }
 
-void FrameBufferObject::SetWrite() {
-	FrameBufferObject::SetWrite(this);
+void FrameBufferObject::SetDraw() {
+	FrameBufferObject::SetDraw(this);
 }
 
 void FrameBufferObject::SetRead() {
 	FrameBufferObject::SetRead(this);
+}
+
+void FrameBufferObject::LogInfo() {
+	FrameBufferObject::LogInfo(this);
+}
+
+void FrameBufferObject::AttachTexture(GLenum attatchment, const Texture *texture) {
+	this->SetDraw();
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attatchment, texture->getTarget(), texture->getID(), 0);
+	FrameBufferObject::Reset(GL_DRAW_FRAMEBUFFER);
 }
 
 #pragma endregion
