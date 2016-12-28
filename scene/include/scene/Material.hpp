@@ -19,17 +19,27 @@ public:
     Vector3 getSpecularColour() const;
     void setSpecularColour(Vector3 c);
 
-    float getShininess() const;
-    void setShininess(float s);
+	float getShininess() const;
+	void setShininess(float s);
+
+	int getMainTextureId() const;
+	void setMainTextureId(int t);
+
+	int getNormalTextureId() const;
+	void setNormalTextureId(int t);
 
     bool isShiny() const;
 
 
 private:
     Vector3 diffuse_colour;
-    MaterialId id;
-    Vector3 specular_colour;
     float shininess;
+    Vector3 specular_colour;
+	int main_texture_id{ 128 };
+
+	Vector2 pad{ 128, 128 };
+	unsigned int normal_texture_id{ 128 };
+    MaterialId id;
 
 };
 

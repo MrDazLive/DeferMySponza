@@ -36,12 +36,28 @@ void Material::setSpecularColour(Vector3 c)
 
 float Material::getShininess() const
 {
-    return shininess;
+	return shininess;
 }
 
 void Material::setShininess(float s)
 {
-    shininess = s;
+	shininess = s;
+}
+
+int Material::getMainTextureId() const {
+	return main_texture_id;
+}
+
+void Material::setMainTextureId(int t) {
+	main_texture_id = t;
+}
+
+int Material::getNormalTextureId() const {
+	return normal_texture_id;
+}
+
+void Material::setNormalTextureId(int t) {
+	normal_texture_id = t;
 }
 
 bool Material::isShiny() const

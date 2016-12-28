@@ -35,6 +35,7 @@ struct MyView::Mesh {
 struct MyView::Vertex {
 	glm::vec3 positiion;
 	glm::vec3 normal;
+	glm::vec3 tangent;
 	glm::vec2 textureCoordinate;
 };
 
@@ -117,7 +118,10 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonInstancedVOs;
 
 	delete m_materialUBO;
-	delete m_texture;
+
+	for (Texture *ptr : m_mainTexture) {
+		delete ptr;
+	}
 
 	delete m_instancedProgram;
 	delete m_nonInstancedProgram;
@@ -197,9 +201,10 @@ void MyView::PrepareVOs() {
 	PrepareVBOs();
 	PrepareUBOs();
 
-	PrepareTextures();
 	PrepareShaders();
 	PreparePrograms();
+
+	PrepareTextures();
 }
 
 void MyView::PrepareVAOs() {
@@ -208,7 +213,8 @@ void MyView::PrepareVAOs() {
 	m_instancedVOs->vbo[Buffer::Vertex].SetActive();
 	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
 	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_instancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_instancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 	m_instancedVOs->vbo[Buffer::Instance].SetActive();
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
 	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
@@ -221,7 +227,8 @@ void MyView::PrepareVAOs() {
 	m_nonStaticVOs->vbo[Buffer::Vertex].SetActive();
 	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
 	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_nonStaticVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonStaticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonStaticVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 	m_nonStaticVOs->vbo[Buffer::Instance].SetActive();
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
@@ -234,7 +241,8 @@ void MyView::PrepareVAOs() {
 	m_nonInstancedVOs->vbo[Buffer::Vertex].SetActive();
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -303,6 +311,7 @@ void MyView::PreparePrograms() {
 
 	m_instancedProgram->AddInAttribute("vertex_position");
 	m_instancedProgram->AddInAttribute("vertex_normal");
+	m_instancedProgram->AddInAttribute("vertex_tangent");
 	m_instancedProgram->AddInAttribute("vertex_texture_coordinate");
 
 	m_instancedProgram->AddInAttribute("model");
@@ -313,13 +322,6 @@ void MyView::PreparePrograms() {
 
 	m_instancedProgram->BindBlock(m_materialUBO, "block_material");
 
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_texture->getID());
-		GLuint texture_id = glGetUniformLocation(m_instancedProgram->getID(), "wall_texture");
-		glUniform1i(texture_id, 0);
-	}
-
 	m_nonInstancedProgram = new ShaderProgram();
 
 	m_nonInstancedProgram->AddShader(m_nonInstancedVS);
@@ -327,6 +329,7 @@ void MyView::PreparePrograms() {
 
 	m_nonInstancedProgram->AddInAttribute("vertex_position");
 	m_nonInstancedProgram->AddInAttribute("vertex_normal");
+	m_nonInstancedProgram->AddInAttribute("vertex_tangent");
 	m_nonInstancedProgram->AddInAttribute("vertex_texture_coordinate");
 
 	m_nonInstancedProgram->AddOutAttribute("fragment_colour");
@@ -334,13 +337,6 @@ void MyView::PreparePrograms() {
 	m_nonInstancedProgram->Link();
 
 	m_nonInstancedProgram->BindBlock(m_materialUBO, "block_material");
-
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_texture->getID());
-		GLuint texture_id = glGetUniformLocation(m_nonInstancedProgram->getID(), "wall_texture");
-		glUniform1i(texture_id, 0);
-	}
 }
 
 void MyView::PrepareMeshData() {
@@ -373,8 +369,60 @@ void MyView::PrepareMeshData() {
 }
 
 void MyView::PrepareTextures() {
-	m_texture = new Texture(GL_TEXTURE_2D);
-	m_texture->LoadFile("content:///wall.png");
+	GLuint mainTextureID[7];
+	std::string mainTexture[7] = { "content:///brick.png", "content:///wall.png", "content:///not_fabric.png" };
+	GLuint normalTextureID[7];
+	std::string normalTexture[7] = { "content:///brick_norm.png", "content:///wall_norm.png", "content:///not_fabric_norm.png" };
+	
+	for (unsigned int i = 0; i < 7; i++) {
+		if (mainTexture[i].size() > 0) {
+			m_mainTexture[i] = new Texture(GL_TEXTURE_2D);
+			m_mainTexture[i]->LoadFile(mainTexture[i]);
+			mainTextureID[i] = m_mainTexture[i]->getID();
+		}
+
+		if (normalTexture[i].size() > 0) {
+			m_normalTexture[i] = new Texture(GL_TEXTURE_2D);
+			m_normalTexture[i]->LoadFile(normalTexture[i]);
+			normalTextureID[i] = m_normalTexture[i]->getID();
+		}
+	}
+
+	m_instancedProgram->SetActive();
+	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		std::string main = "mainTexture[" + std::to_string(i) + "]";
+		std::string normal = "normalTexture[" + std::to_string(i) + "]";
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, mainTextureID[i]);
+		GLuint main_id = glGetUniformLocation(m_instancedProgram->getID(), main.c_str());
+		glUniform1i(main_id, j);
+
+		j++;
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, normalTextureID[i]);
+		GLuint normal_id = glGetUniformLocation(m_instancedProgram->getID(), normal.c_str());
+		glUniform1i(normal_id, j);
+	}
+
+	m_nonInstancedProgram->SetActive();
+	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		std::string main = "mainTexture[" + std::to_string(i) + "]";
+		std::string normal = "normalTexture[" + std::to_string(i) + "]";
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, mainTextureID[i]);
+		GLuint main_id = glGetUniformLocation(m_nonInstancedProgram->getID(), main.c_str());
+		glUniform1i(main_id, j);
+
+		j++;
+
+		glActiveTexture(GL_TEXTURE0 + j);
+		glBindTexture(GL_TEXTURE_2D, normalTextureID[i]);
+		GLuint normal_id = glGetUniformLocation(m_nonInstancedProgram->getID(), normal.c_str());
+		glUniform1i(normal_id, j);
+	}
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
@@ -393,6 +441,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 
 		const auto &positions = mesh.getPositionArray();
 		const auto &normals = mesh.getNormalArray();
+		const auto &tangents = mesh.getTangentArray();
 		const auto &textureCoordinates = mesh.getTextureCoordinateArray();
 
 		const unsigned int vertexCount = positions.size();
@@ -402,6 +451,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 				Vertex v;
 				v.positiion = (const glm::vec3&)positions[i];
 				v.normal = (const glm::vec3&)normals[i];
+				v.tangent = glm::vec3(0);
 				v.textureCoordinate = glm::vec2(0);
 				vertices.push_back(v);
 			}
@@ -410,6 +460,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 				Vertex v;
 				v.positiion = (const glm::vec3&)positions[i];
 				v.normal = (const glm::vec3&)normals[i];
+				v.tangent = (const glm::vec3&)tangents[i];
 				v.textureCoordinate = (const glm::vec2&)textureCoordinates[i];
 				vertices.push_back(v);
 			}
@@ -434,7 +485,8 @@ void MyView::RenderEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_instancedProgram->SetActive();
-	m_instancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
+	m_instancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	m_instancedProgram->BindUniformM4(combined_transform, "combined_transform");
 
 	m_queryInstancedDraw->Begin();
 	m_instancedVOs->vao.SetActive();
@@ -452,7 +504,8 @@ void MyView::RenderEnvironment() {
 	m_queryMovingDraw->End();
 
 	m_nonInstancedProgram->SetActive();
-	m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, combined_transform, "combined_transform");
+	m_nonInstancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	m_nonInstancedProgram->BindUniformM4(combined_transform, "combined_transform");
 
 	m_queryUniqueDraw->Begin();
 	m_nonInstancedVOs->vao.SetActive();
@@ -465,7 +518,7 @@ void MyView::RenderEnvironment() {
 		glUniform1i(id, model_material);
 
 		glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
-		m_nonInstancedProgram->BindUniform(glUniformMatrix4fv, model_transform, "model_transform");
+		m_nonInstancedProgram->BindUniformM4(model_transform, "model_transform");
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}

@@ -50,7 +50,8 @@ private:
 	NonInstanceVOs *m_nonInstancedVOs;
 
 	VertexBufferObject *m_materialUBO;
-	Texture *m_texture;
+	Texture *m_mainTexture[7];
+	Texture *m_normalTexture[7];
 
 	std::vector<Mesh> m_instancedMeshes;
 	std::vector<Mesh> m_nonStaticMeshes;
