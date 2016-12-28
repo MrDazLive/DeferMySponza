@@ -320,6 +320,7 @@
     <ClCompile Include="source\MyController.cpp" />
     <ClCompile Include="source\MyView.cpp" />
     <ClCompile Include="source\rendering\FrameBufferObject.cpp" />
+    <ClCompile Include="source\rendering\PostProcessing.cpp" />
     <ClCompile Include="source\rendering\Shader.cpp" />
     <ClCompile Include="source\rendering\ShaderProgram.cpp" />
     <ClCompile Include="source\rendering\Texture.cpp" />
@@ -333,6 +334,7 @@
     <ClInclude Include="source\rendering\enums\Buffer.h" />
     <ClInclude Include="source\rendering\enums\Mode.h" />
     <ClInclude Include="source\rendering\FrameBufferObject.h" />
+    <ClInclude Include="source\rendering\PostProcessing.h" />
     <ClInclude Include="source\rendering\Shader.h" />
     <ClInclude Include="source\rendering\ShaderProgram.h" />
     <ClInclude Include="source\rendering\Texture.h" />
@@ -344,6 +346,8 @@
     <None Include="shaders\instanced_vs.glsl" />
     <None Include="shaders\mesh_fs.glsl" />
     <None Include="shaders\nonInstanced_vs.glsl" />
+    <None Include="shaders\post_fs.glsl" />
+    <None Include="shaders\post_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

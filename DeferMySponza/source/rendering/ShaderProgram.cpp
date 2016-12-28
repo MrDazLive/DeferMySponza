@@ -2,6 +2,7 @@
 
 #include <tgl\tgl.h>
 #include "Shader.h"
+#include "Texture.h"
 #include "VertexBufferObject.h"
 
 #pragma region Constructors/Destructors
@@ -88,6 +89,15 @@ void ShaderProgram::BindBlock(VertexBufferObject *vbo, const std::string name) {
 	GLuint index = glGetUniformBlockIndex(m_id, name.c_str());
 	glUniformBlockBinding(m_id, index, 0);
 	VertexBufferObject::Reset(vbo->getTarget());
+}
+
+void ShaderProgram::BindUniformTexture(const Texture *texture, const std::string name) {
+	glActiveTexture(GL_TEXTURE0 + m_textureCount);
+	glBindTexture(texture->getTarget(), texture->getID());
+	GLuint id = glGetUniformLocation(this->getID(), name.c_str());
+	glUniform1i(id, m_textureCount);
+
+	m_textureCount++;
 }
 
 #pragma endregion

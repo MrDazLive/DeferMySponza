@@ -12,6 +12,7 @@
 #include "rendering\Shader.h"
 #include "rendering\Texture.h"
 #include "rendering\ShaderProgram.h"
+#include "rendering\PostProcessing.h"
 #include "rendering\FrameBufferObject.h"
 #include "rendering\VertexArrayObject.h"
 #include "rendering\VertexBufferObject.h"
@@ -108,6 +109,9 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 
 	PrepareVOs();
 	PrepareTimers();
+
+	m_pp = new PostProcessing("resource:///post_vs.glsl", "resource:///post_fs.glsl");
+	m_pp->setSourceTexture(m_gbuffer);
 }
 
 void MyView::windowViewDidReset(tygra::Window * window,
@@ -119,14 +123,14 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	const float aspect_ratio = (float)width / (float)height;
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
 
-	delete m_fbo;
-	delete m_dbuffer;
-	delete m_gbuffer;
-
-	PrepareGBs(width, height);
+	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, width, height, GL_DEPTH_COMPONENT, GL_FLOAT);
+	m_gbuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_pp->setTextureSize(width, height);
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
+	delete m_pp;
+
 	delete m_fbo;
 	delete m_dbuffer;
 	delete m_gbuffer;
@@ -149,6 +153,7 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 
 	delete m_queryForwardRender;
 	delete m_queryDeferredRender;
+	delete m_queryPostProcessing;
 }
 
 void MyView::windowViewRender(tygra::Window * window) {
@@ -162,6 +167,7 @@ void MyView::windowViewRender(tygra::Window * window) {
 		break;
 	case Mode::Deferred:
 		DeferredRender();
+		PostProcessRender();
 		break;
 	default:
 		std::cerr << "No valid render mode selected." << std::endl;
@@ -174,12 +180,14 @@ void MyView::windowViewRender(tygra::Window * window) {
 void MyView::LogTimers() {
 	std::cout << "Forward Rendering: (" << m_queryForwardRender->toString() << ")" << std::endl;
 	std::cout << "Deferred Rendering: (" << m_queryDeferredRender->toString() << ")" << std::endl;
+	std::cout << "Post Processing: (" << m_queryPostProcessing->toString() << ")" << std::endl;
 	std::cout << std::endl;
 }
 
 void MyView::ResetTimers() {
 	m_queryForwardRender->Reset();
 	m_queryDeferredRender->Reset();
+	m_queryPostProcessing->Reset();
 }
 
 void MyView::ReloadShaders() {
@@ -202,6 +210,7 @@ void MyView::PrepareVOs() {
 	m_nonStaticVOs = new NonStaticVOs();
 	m_nonInstancedVOs = new NonInstanceVOs();
 
+	PrepareGBs();
 	PrepareMeshData();
 
 	PrepareVAOs();
@@ -295,6 +304,7 @@ void MyView::PrepareUBOs() {
 void MyView::PrepareTimers() {
 	m_queryForwardRender = new TimeQuery();
 	m_queryDeferredRender = new TimeQuery();
+	m_queryPostProcessing = new TimeQuery();
 }
 
 void MyView::PrepareShaders() {
@@ -369,71 +379,55 @@ void MyView::PrepareMeshData() {
 }
 
 void MyView::PrepareTextures() {
-	GLuint mainTextureID[7];
 	std::string mainTexture[7] = { "content:///brick.png", "content:///wall.png", "content:///not_fabric.png" };
-	GLuint normalTextureID[7];
 	std::string normalTexture[7] = { "content:///brick_norm.png", "content:///wall_norm.png", "content:///not_fabric_norm.png" };
 	
 	for (unsigned int i = 0; i < 7; i++) {
 		if (mainTexture[i].size() > 0) {
 			m_mainTexture[i] = new Texture(GL_TEXTURE_2D);
 			m_mainTexture[i]->LoadFile(mainTexture[i]);
-			mainTextureID[i] = m_mainTexture[i]->getID();
 		}
 
 		if (normalTexture[i].size() > 0) {
 			m_normalTexture[i] = new Texture(GL_TEXTURE_2D);
 			m_normalTexture[i]->LoadFile(normalTexture[i]);
-			normalTextureID[i] = m_normalTexture[i]->getID();
 		}
 	}
 
 	m_instancedProgram->SetActive();
 	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
+			break;
+
 		std::string main = "mainTexture[" + std::to_string(i) + "]";
 		std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-		glActiveTexture(GL_TEXTURE0 + j);
-		glBindTexture(GL_TEXTURE_2D, mainTextureID[i]);
-		GLuint main_id = glGetUniformLocation(m_instancedProgram->getID(), main.c_str());
-		glUniform1i(main_id, j);
-
-		j++;
-
-		glActiveTexture(GL_TEXTURE0 + j);
-		glBindTexture(GL_TEXTURE_2D, normalTextureID[i]);
-		GLuint normal_id = glGetUniformLocation(m_instancedProgram->getID(), normal.c_str());
-		glUniform1i(normal_id, j);
+		m_instancedProgram->BindUniformTexture(m_mainTexture[i], main);
+		m_instancedProgram->BindUniformTexture(m_normalTexture[i], normal);
 	}
 
 	m_nonInstancedProgram->SetActive();
 	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
+			break;
+
 		std::string main = "mainTexture[" + std::to_string(i) + "]";
 		std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-		glActiveTexture(GL_TEXTURE0 + j);
-		glBindTexture(GL_TEXTURE_2D, mainTextureID[i]);
-		GLuint main_id = glGetUniformLocation(m_nonInstancedProgram->getID(), main.c_str());
-		glUniform1i(main_id, j);
-
-		j++;
-
-		glActiveTexture(GL_TEXTURE0 + j);
-		glBindTexture(GL_TEXTURE_2D, normalTextureID[i]);
-		GLuint normal_id = glGetUniformLocation(m_nonInstancedProgram->getID(), normal.c_str());
-		glUniform1i(normal_id, j);
+		m_nonInstancedProgram->BindUniformTexture(m_mainTexture[i], main);
+		m_nonInstancedProgram->BindUniformTexture(m_normalTexture[i], normal);
 	}
 }
 
-void MyView::PrepareGBs(const float width, const float height) {
+void MyView::PrepareGBs() {
 	m_fbo = new FrameBufferObject();
 
-	m_dbuffer = new Texture(GL_TEXTURE_2D);
-	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, width, height, GL_DEPTH_COMPONENT, GL_FLOAT);
+	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE);
+	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, 0, 0, GL_DEPTH_COMPONENT, GL_FLOAT);
 	m_fbo->AttachTexture(GL_DEPTH_ATTACHMENT, m_dbuffer);
 
-	m_gbuffer = new Texture(GL_TEXTURE_2D);
-	m_gbuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_gbuffer = new Texture(GL_TEXTURE_RECTANGLE);
+	m_gbuffer->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0, m_gbuffer);
 }
 
@@ -515,6 +509,16 @@ void MyView::DeferredRender() {
 	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
 
 	m_queryDeferredRender->End();
+	FrameBufferObject::Reset();
+}
+
+
+void MyView::PostProcessRender() {
+	m_queryPostProcessing->Begin();
+
+	m_pp->Draw();
+
+	m_queryPostProcessing->End();
 }
 
 void MyView::DrawEnvironment() {

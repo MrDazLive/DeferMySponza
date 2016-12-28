@@ -5,6 +5,7 @@
 #include <functional>
 
 class Shader;
+class Texture;
 class VertexBufferObject;
 
 class ShaderProgram {
@@ -32,6 +33,7 @@ public:
 	void AddInAttribute(const std::string name);
 	void AddOutAttribute(const std::string name);
 	void BindBlock(VertexBufferObject *vbo, const std::string name);
+	void BindUniformTexture(const Texture *texture, const std::string name);
 	template <typename T> void BindUniformV3(const T& value, const std::string name);
 	template <typename T> void BindUniformM4(const T& value, const std::string name);
 #pragma endregion
@@ -39,6 +41,7 @@ private:
 	GLuint m_id;
 	GLuint m_inAttributeCount{ 0 };
 	GLuint m_outAttributeCount{ 0 };
+	GLuint m_textureCount{ 0 };
 	GLint m_status{ GL_FALSE };
 };
 

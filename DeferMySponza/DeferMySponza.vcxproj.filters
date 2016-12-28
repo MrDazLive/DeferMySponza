@@ -64,6 +64,9 @@
     <ClCompile Include="source\rendering\FrameBufferObject.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="source\rendering\PostProcessing.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">
@@ -99,6 +102,9 @@
     <ClInclude Include="source\rendering\enums\Mode.h">
       <Filter>Header Files\Rendering\Enums</Filter>
     </ClInclude>
+    <ClInclude Include="source\rendering\PostProcessing.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\instanced_vs.glsl">
@@ -108,6 +114,12 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\nonInstanced_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\post_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\post_fs.glsl">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

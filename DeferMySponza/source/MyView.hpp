@@ -13,6 +13,7 @@
 class VertexBufferObject;
 class VertexArrayObject;
 class FrameBufferObject;
+class PostProcessing;
 class ShaderProgram;
 class TimeQuery;
 class Texture;
@@ -82,9 +83,13 @@ private:
 		Shader *m_nonInstancedVS{ nullptr };
 		Shader *m_meshFS{ nullptr };
 	#pragma endregion
+	#pragma region Post-Processing
+		PostProcessing *m_pp;
+	#pragma endregion
 	#pragma region Time Queries
 		TimeQuery *m_queryForwardRender{ nullptr };
 		TimeQuery *m_queryDeferredRender{ nullptr };
+		TimeQuery *m_queryPostProcessing{ nullptr };
 	#pragma endregion
 #pragma endregion
 #pragma region Window Methods
@@ -100,6 +105,7 @@ private:
 #pragma endregion
 #pragma region Setup Methods
 	void PrepareVOs();
+	void PrepareGBs();
 	void PrepareVAOs();
 	void PrepareVBOs();
 	void PrepareUBOs();
@@ -108,12 +114,12 @@ private:
 	void PreparePrograms();
 	void PrepareMeshData();
 	void PrepareTextures();
-	void PrepareGBs(const float width, const float height);
 	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances);
 #pragma endregion
 #pragma region Render Methods
 	void ForwardRender();
 	void DeferredRender();
+	void PostProcessRender();
 
 	void DrawEnvironment();
 #pragma endregion
