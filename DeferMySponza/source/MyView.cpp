@@ -73,6 +73,25 @@ struct MyView::NonInstanceVOs {
 	std::vector<Instance> instances;
 };
 
+struct MyView::DirectionalLight {
+	glm::vec3 direction;
+	glm::vec3 intensity;
+};
+
+struct MyView::PointLight {
+	glm::vec3 position;
+	glm::vec3 intensity;
+	float range;
+};
+
+struct MyView::SpotLight {
+	glm::vec3 position;
+	glm::vec3 direction;
+	glm::vec3 intensity;
+	float range;
+	float coneAngle;
+};
+
 #pragma endregion
 #pragma region Constructors/Destructors
 
@@ -142,13 +161,17 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonStaticVOs;
 	delete m_nonInstancedVOs;
 
+	delete m_lightVBO[Light::Directional];
+	delete m_lightVBO[Light::Point];
+	delete m_lightVBO[Light::Spot];
+
 	delete m_materialUBO;
 	for (Texture *ptr : m_mainTexture) {
 		delete ptr;
 	}
 
-	delete m_instancedProgram;
-	delete m_nonInstancedProgram;
+	delete m_environmentProgram[Program::Instanced];
+	delete m_environmentProgram[Program::NonInstanced];
 
 	delete m_instancedVS;
 	delete m_nonInstancedVS;
@@ -191,18 +214,6 @@ void MyView::ResetTimers() {
 	m_queryForwardRender->Reset();
 	m_queryDeferredRender->Reset();
 	m_queryPostProcessing->Reset();
-}
-
-void MyView::ReloadShaders() {
-	delete m_instancedVS;
-	delete m_nonInstancedVS;
-	delete m_meshFS;
-	PrepareShaders();
-	if ((m_nonInstancedVS->getStatus() && m_instancedVS->getStatus() && m_meshFS->getStatus()) == GL_TRUE) {
-		delete m_instancedProgram;
-		delete m_nonInstancedProgram;
-		PreparePrograms();
-	}
 }
 
 void MyView::TogglePostProcessing() {
@@ -313,6 +324,10 @@ void MyView::PrepareVBOs() {
 	vertices.clear();
 	elements.clear();
 	instances.clear();
+
+	m_lightVBO[Light::Directional] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightVBO[Light::Point] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightVBO[Light::Spot] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 }
 
 void MyView::PrepareUBOs() {
@@ -339,39 +354,41 @@ void MyView::PrepareShaders() {
 }
 
 void MyView::PreparePrograms() {
-	m_instancedProgram = new ShaderProgram();
+	ShaderProgram *p = new ShaderProgram();
+	m_environmentProgram[Program::Instanced] = p;
 
-	m_instancedProgram->AddShader(m_instancedVS);
-	m_instancedProgram->AddShader(m_meshFS);
+	p->AddShader(m_instancedVS);
+	p->AddShader(m_meshFS);
 
-	m_instancedProgram->AddInAttribute("vertex_position");
-	m_instancedProgram->AddInAttribute("vertex_normal");
-	m_instancedProgram->AddInAttribute("vertex_tangent");
-	m_instancedProgram->AddInAttribute("vertex_texture_coordinate");
+	p->AddInAttribute("vertex_position");
+	p->AddInAttribute("vertex_normal");
+	p->AddInAttribute("vertex_tangent");
+	p->AddInAttribute("vertex_texture_coordinate");
 
-	m_instancedProgram->AddInAttribute("model");
+	p->AddInAttribute("model");
 
-	m_instancedProgram->AddOutAttribute("fragment_colour");
+	p->AddOutAttribute("fragment_colour");
 
-	m_instancedProgram->Link();
+	p->Link();
 
-	m_instancedProgram->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO, "block_material");
 
-	m_nonInstancedProgram = new ShaderProgram();
+	p = new ShaderProgram();
+	m_environmentProgram[Program::NonInstanced] = p;
 
-	m_nonInstancedProgram->AddShader(m_nonInstancedVS);
-	m_nonInstancedProgram->AddShader(m_meshFS);
+	p->AddShader(m_nonInstancedVS);
+	p->AddShader(m_meshFS);
 
-	m_nonInstancedProgram->AddInAttribute("vertex_position");
-	m_nonInstancedProgram->AddInAttribute("vertex_normal");
-	m_nonInstancedProgram->AddInAttribute("vertex_tangent");
-	m_nonInstancedProgram->AddInAttribute("vertex_texture_coordinate");
+	p->AddInAttribute("vertex_position");
+	p->AddInAttribute("vertex_normal");
+	p->AddInAttribute("vertex_tangent");
+	p->AddInAttribute("vertex_texture_coordinate");
 
-	m_nonInstancedProgram->AddOutAttribute("fragment_colour");
+	p->AddOutAttribute("fragment_colour");
 
-	m_nonInstancedProgram->Link();
+	p->Link();
 
-	m_nonInstancedProgram->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO, "block_material");
 }
 
 void MyView::PrepareMeshData() {
@@ -414,28 +431,19 @@ void MyView::PrepareTextures() {
 		}
 	}
 
-	m_instancedProgram->SetActive();
-	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
-		if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
-			break;
+	ShaderProgram *ptrs[2] = { m_environmentProgram[Program::Instanced], m_environmentProgram[Program::NonInstanced] };
+	for (ShaderProgram *ptr : ptrs) {
+		ptr->SetActive();
+		for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+			if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
+				break;
 
-		std::string main = "mainTexture[" + std::to_string(i) + "]";
-		std::string normal = "normalTexture[" + std::to_string(i) + "]";
+			std::string main = "mainTexture[" + std::to_string(i) + "]";
+			std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-		m_instancedProgram->BindUniformTexture(m_mainTexture[i], main, (i * 2));
-		m_instancedProgram->BindUniformTexture(m_normalTexture[i], normal,  (i * 2) + 1);
-	}
-
-	m_nonInstancedProgram->SetActive();
-	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
-		if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
-			break;
-
-		std::string main = "mainTexture[" + std::to_string(i) + "]";
-		std::string normal = "normalTexture[" + std::to_string(i) + "]";
-
-		m_nonInstancedProgram->BindUniformTexture(m_mainTexture[i], main, (i * 2));
-		m_nonInstancedProgram->BindUniformTexture(m_normalTexture[i], normal, (i * 2) + 1);
+			ptr->BindUniformTexture(m_mainTexture[i], main, (i * 2));
+			ptr->BindUniformTexture(m_normalTexture[i], normal, (i * 2) + 1);
+		}
 	}
 }
 
@@ -526,6 +534,8 @@ void MyView::DeferredRender() {
 
 	DrawEnvironment();
 
+	UpdateLights();
+
 	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
 
 	FrameBufferObject::Reset();
@@ -535,7 +545,7 @@ void MyView::DeferredRender() {
 
 void MyView::PostProcessRender() {
 	m_queryPostProcessing->Begin();
-
+	
 	switch (m_postMode) {
 		case PostProcess::Anti_Aliasing:
 			m_antiAliasing->Draw();
@@ -553,9 +563,10 @@ void MyView::PostProcessRender() {
 void MyView::DrawEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
-	m_instancedProgram->SetActive();
-	m_instancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
-	m_instancedProgram->BindUniformM4(combined_transform, "combined_transform");
+	m_environmentProgram[Program::Instanced]->SetActive();
+	m_environmentProgram[Program::Instanced]->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	m_environmentProgram[Program::Instanced]->BindUniformM4(combined_transform, "combined_transform");
+	m_environmentProgram[Program::Instanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
 	m_instancedVOs->vao.SetActive();
 	for (const Mesh& mesh : m_instancedMeshes) {
@@ -568,9 +579,10 @@ void MyView::DrawEnvironment() {
 		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
 	}
 
-	m_nonInstancedProgram->SetActive();
-	m_nonInstancedProgram->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
-	m_nonInstancedProgram->BindUniformM4(combined_transform, "combined_transform");
+	m_environmentProgram[Program::NonInstanced]->SetActive();
+	m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	m_environmentProgram[Program::NonInstanced]->BindUniformM4(combined_transform, "combined_transform");
+	m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
 	m_nonInstancedVOs->vao.SetActive();
 	GLuint count = m_nonInstancedMeshes.size();
@@ -578,11 +590,11 @@ void MyView::DrawEnvironment() {
 		const Mesh &mesh = m_nonInstancedMeshes[i];
 
 		GLuint model_material = m_nonInstancedVOs->instances[i].material;
-		GLint id = glGetUniformLocation(m_nonInstancedProgram->getID(), "model_material");
+		GLint id = glGetUniformLocation(m_environmentProgram[Program::NonInstanced]->getID(), "model.material");
 		glUniform1i(id, model_material);
 
 		glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
-		m_nonInstancedProgram->BindUniformM4(model_transform, "model_transform");
+		m_environmentProgram[Program::NonInstanced]->BindUniformM4(model_transform, "model.transform");
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 	}
@@ -612,6 +624,38 @@ void MyView::UpdateNonStaticTransforms() {
 		}
 	}
 	m_nonStaticVOs->vbo[Buffer::Instance].BufferData(instances);
+}
+
+void MyView::UpdateLights() {
+	std::vector<DirectionalLight> dLights;
+	for (const auto &light : scene_->getAllDirectionalLights()) {
+		DirectionalLight d;
+		d.direction = (const glm::vec3&)light.getDirection();
+		d.intensity = (const glm::vec3&)light.getIntensity();
+		dLights.push_back(d);
+	}
+	m_lightVBO[Light::Directional]->BufferData(dLights);
+
+	std::vector<PointLight> pLights;
+	for (const auto &light : scene_->getAllPointLights()) {
+		PointLight p;
+		p.position = (const glm::vec3&)light.getPosition();
+		p.intensity = (const glm::vec3&)light.getIntensity();
+		p.range = light.getRange();
+		pLights.push_back(p);
+	}
+	m_lightVBO[Light::Point]->BufferData(dLights);
+
+	std::vector<SpotLight> sLights;
+	for (const auto &light : scene_->getAllSpotLights()) {
+		SpotLight s;
+		s.position = (const glm::vec3&)light.getPosition();
+		s.direction = (const glm::vec3&)light.getDirection();
+		s.intensity = (const glm::vec3&)light.getIntensity();
+		s.range = light.getRange();
+		sLights.push_back(s);
+	}
+	m_lightVBO[Light::Spot]->BufferData(dLights);
 }
 
 #pragma endregion

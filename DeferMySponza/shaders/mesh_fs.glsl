@@ -20,6 +20,7 @@ layout (std140) uniform block_material {
 uniform	sampler2D mainTexture[7];
 uniform	sampler2D normalTexture[7];
 
+uniform vec3 ambience;
 uniform vec3 camera_position;
 
 in vec3 varying_position;
@@ -62,19 +63,19 @@ vec2 parallaxMapping() {
 		(viewDir.xy) * texture(normalTexture[material[fixed_material].normalTexture], varying_texture_coordinate).r * .3f;
 }
 
-void main(void) {		
+void main(void) {	
 	if(material[fixed_material].mainTexture < 6) {
 		vec2 coord = varying_texture_coordinate;// parallaxMapping();
-		vec4 mT = texture(mainTexture[material[fixed_material].mainTexture], coord);
+		vec3 mT = texture(mainTexture[material[fixed_material].mainTexture], coord).xyz;
 
 		vec3 normal = bumpNormal(coord);
 		float i = clamp(dot(normal, normalize(light_dir)), 0, 1);
 
-		fragment_colour = (mT * vec4(material[fixed_material].diffuse, 0) * i).xyz;
+		fragment_colour = mT * material[fixed_material].diffuse * (vec3(i) + ambience);
 	} else {
 		vec3 normal = varying_normal;
 		float i = clamp(dot(normal, normalize(light_dir)), 0, 1);
 		
-		fragment_colour = material[fixed_material].diffuse * i;
+		fragment_colour = material[fixed_material].diffuse * (vec3(i) + ambience);
 	}
 }

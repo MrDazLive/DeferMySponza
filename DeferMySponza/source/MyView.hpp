@@ -46,6 +46,10 @@ private:
 	struct InstanceVOs;
 	struct NonStaticVOs;
 	struct NonInstanceVOs;
+
+	struct DirectionalLight;
+	struct PointLight;
+	struct SpotLight;
 #pragma endregion
 #pragma region Members
 	#pragma region General
@@ -66,6 +70,13 @@ private:
 		InstanceVOs *m_instancedVOs{ nullptr };
 		NonStaticVOs *m_nonStaticVOs{ nullptr };
 		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
+
+		enum Light {
+			Directional = 0,
+			Point = 1,
+			Spot = 2
+		};
+		VertexBufferObject *m_lightVBO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
 		VertexBufferObject *m_materialUBO{ nullptr };
@@ -78,8 +89,12 @@ private:
 		std::vector<Mesh> m_nonInstancedMeshes;
 	#pragma endregion
 	#pragma region Shader Programs
-		ShaderProgram *m_instancedProgram{ nullptr };
-		ShaderProgram *m_nonInstancedProgram{ nullptr };
+		enum Program {
+			Instanced = 0,
+			NonInstanced = 1
+		};
+
+		ShaderProgram *m_environmentProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
 		Shader *m_instancedVS{ nullptr };
@@ -130,5 +145,6 @@ private:
 #pragma region Additional Methods
 	void UpdateViewTransform();
 	void UpdateNonStaticTransforms();
+	void UpdateLights();
 #pragma endregion
 };
