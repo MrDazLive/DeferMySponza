@@ -110,8 +110,10 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 	PrepareVOs();
 	PrepareTimers();
 
-	m_pp = new PostProcessing("resource:///post_vs.glsl", "resource:///post_fs.glsl");
-	m_pp->setSourceTexture(m_gbuffer);
+	m_antiAliasing = new PostProcessing("resource:///post_vs.glsl", "resource:///anti_aliasing_fs.glsl");
+	m_antiAliasing->setSourceTexture(m_gbuffer);
+	m_celShading = new PostProcessing("resource:///post_vs.glsl", "resource:///cel_shading_fs.glsl");
+	m_celShading->setSourceTexture(m_gbuffer);
 }
 
 void MyView::windowViewDidReset(tygra::Window * window,
@@ -125,11 +127,12 @@ void MyView::windowViewDidReset(tygra::Window * window,
 
 	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, width, height, GL_DEPTH_COMPONENT, GL_FLOAT);
 	m_gbuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-	m_pp->setTextureSize(width, height);
+	m_antiAliasing->setTextureSize(width, height);
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
-	delete m_pp;
+	delete m_antiAliasing;
+	delete m_celShading;
 
 	delete m_fbo;
 	delete m_dbuffer;
@@ -167,7 +170,7 @@ void MyView::windowViewRender(tygra::Window * window) {
 		break;
 	case Mode::Deferred:
 		DeferredRender();
-		if(m_usePostProcessing) PostProcessRender();
+		if(m_postMode != PostProcess::Off) PostProcessRender();
 		break;
 	default:
 		std::cerr << "No valid render mode selected." << std::endl;
@@ -203,7 +206,20 @@ void MyView::ReloadShaders() {
 }
 
 void MyView::TogglePostProcessing() {
-	m_usePostProcessing = !m_usePostProcessing;
+	switch (m_postMode) {
+		case PostProcess::Off:
+			m_postMode = PostProcess::Anti_Aliasing;
+			break;
+		case PostProcess::Anti_Aliasing:
+			m_postMode = PostProcess::Cel_Shading;
+			break;
+		case PostProcess::Cel_Shading:
+			m_postMode = PostProcess::Off;
+			break;
+		default:
+			m_postMode = PostProcess::Off;
+			break;
+	}
 }
 
 #pragma endregion
@@ -520,7 +536,14 @@ void MyView::DeferredRender() {
 void MyView::PostProcessRender() {
 	m_queryPostProcessing->Begin();
 
-	m_pp->Draw();
+	switch (m_postMode) {
+		case PostProcess::Anti_Aliasing:
+			m_antiAliasing->Draw();
+			break;
+		case PostProcess::Cel_Shading:
+			m_celShading->Draw();
+			break;
+	}
 
 	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
 

@@ -333,6 +333,7 @@
     <ClInclude Include="source\MyView.hpp" />
     <ClInclude Include="source\rendering\enums\Buffer.h" />
     <ClInclude Include="source\rendering\enums\Mode.h" />
+    <ClInclude Include="source\rendering\enums\PostProcess.h" />
     <ClInclude Include="source\rendering\FrameBufferObject.h" />
     <ClInclude Include="source\rendering\PostProcessing.h" />
     <ClInclude Include="source\rendering\Shader.h" />
@@ -343,10 +344,11 @@
     <ClInclude Include="source\utilities\TimeQuery.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\cel_shading_fs.glsl" />
     <None Include="shaders\instanced_vs.glsl" />
     <None Include="shaders\mesh_fs.glsl" />
     <None Include="shaders\nonInstanced_vs.glsl" />
-    <None Include="shaders\post_fs.glsl" />
+    <None Include="shaders\anti_aliasing_fs.glsl" />
     <None Include="shaders\post_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

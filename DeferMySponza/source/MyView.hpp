@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "rendering\enums\Mode.h"
+#include "rendering\enums\PostProcess.h"
 
 class VertexBufferObject;
 class VertexArrayObject;
@@ -53,7 +54,7 @@ private:
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
-		GLboolean m_usePostProcessing{ true };
+		PostProcess m_postMode{ PostProcess::Anti_Aliasing };
 		Mode m_renderMode{ Mode::Deferred };
 	#pragma endregion
 	#pragma region Geometry Objects
@@ -86,7 +87,8 @@ private:
 		Shader *m_meshFS{ nullptr };
 	#pragma endregion
 	#pragma region Post-Processing
-		PostProcessing *m_pp;
+		PostProcessing *m_antiAliasing;
+		PostProcessing *m_celShading;
 	#pragma endregion
 	#pragma region Time Queries
 		TimeQuery *m_queryForwardRender{ nullptr };

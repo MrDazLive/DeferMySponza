@@ -105,6 +105,9 @@
     <ClInclude Include="source\rendering\PostProcessing.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="source\rendering\enums\PostProcess.h">
+      <Filter>Header Files\Rendering\Enums</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\instanced_vs.glsl">
@@ -119,7 +122,10 @@
     <None Include="shaders\post_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\post_fs.glsl">
+    <None Include="shaders\anti_aliasing_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\cel_shading_fs.glsl">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>
