@@ -422,8 +422,8 @@ void MyView::PrepareTextures() {
 		std::string main = "mainTexture[" + std::to_string(i) + "]";
 		std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-		m_instancedProgram->BindUniformTexture(m_mainTexture[i], main);
-		m_instancedProgram->BindUniformTexture(m_normalTexture[i], normal);
+		m_instancedProgram->BindUniformTexture(m_mainTexture[i], main, (i * 2));
+		m_instancedProgram->BindUniformTexture(m_normalTexture[i], normal,  (i * 2) + 1);
 	}
 
 	m_nonInstancedProgram->SetActive();
@@ -434,8 +434,8 @@ void MyView::PrepareTextures() {
 		std::string main = "mainTexture[" + std::to_string(i) + "]";
 		std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-		m_nonInstancedProgram->BindUniformTexture(m_mainTexture[i], main);
-		m_nonInstancedProgram->BindUniformTexture(m_normalTexture[i], normal);
+		m_nonInstancedProgram->BindUniformTexture(m_mainTexture[i], main, (i * 2));
+		m_nonInstancedProgram->BindUniformTexture(m_normalTexture[i], normal, (i * 2) + 1);
 	}
 }
 
@@ -528,10 +528,10 @@ void MyView::DeferredRender() {
 
 	m_fbo->BlitTexture(m_gbuffer, view_size.x, view_size.y);
 
-	m_queryDeferredRender->End();
 	FrameBufferObject::Reset();
-}
 
+	m_queryDeferredRender->End();
+}
 
 void MyView::PostProcessRender() {
 	m_queryPostProcessing->Begin();

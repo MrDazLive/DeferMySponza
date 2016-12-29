@@ -91,13 +91,11 @@ void ShaderProgram::BindBlock(VertexBufferObject *vbo, const std::string name) {
 	VertexBufferObject::Reset(vbo->getTarget());
 }
 
-void ShaderProgram::BindUniformTexture(const Texture *texture, const std::string name) {
-	glActiveTexture(GL_TEXTURE0 + m_textureCount);
+void ShaderProgram::BindUniformTexture(const Texture *texture, const std::string name, const GLuint offset) {
+	glActiveTexture(GL_TEXTURE0 + offset);
 	glBindTexture(texture->getTarget(), texture->getID());
 	GLuint id = glGetUniformLocation(this->getID(), name.c_str());
-	glUniform1i(id, m_textureCount);
-
-	m_textureCount++;
+	glUniform1i(id, offset);
 }
 
 #pragma endregion

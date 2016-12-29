@@ -35,8 +35,8 @@ private:
 	GLint m_min{ INT_MAX };
 	GLint m_max{ INT_MIN };
 
-	GLint m_mean{ 0 };
-	GLuint m_count{ 0 };
+	GLuint m_index{ 0 };
+	GLint64 m_list[16]{ 0 };
 
 	const GLenum m_target{ GL_TIME_ELAPSED };
 #pragma endregion

@@ -73,7 +73,6 @@ void FrameBufferObject::BlitTexture(const Texture *texture, const GLuint width, 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target);
 	this->SetRead();
 
-	glReadBuffer(texture->getTarget());
 	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	FrameBufferObject::Reset();
