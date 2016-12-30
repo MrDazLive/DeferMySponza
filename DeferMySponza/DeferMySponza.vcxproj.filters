@@ -128,7 +128,10 @@
     <None Include="shaders\instanced_environment_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\light_fs.glsl">
+    <None Include="shaders\directional_light_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\point_light_fs.glsl">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

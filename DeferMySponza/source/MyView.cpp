@@ -307,10 +307,15 @@ void MyView::PrepareVAOs() {
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 
-	m_lightVAO = new VertexArrayObject();
-	m_lightVAO->SetActive();
+	m_lightVAO[Light::Directional] = new VertexArrayObject();
+	m_lightVAO[Light::Directional]->SetActive();
 	m_lightVBO->SetActive();
-	m_lightVAO->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
+	m_lightVAO[Light::Directional]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
+
+	m_lightVAO[Light::Point] = new VertexArrayObject();
+	m_lightVAO[Light::Point]->SetActive();
+	m_lightVBO->SetActive();
+	m_lightVAO[Light::Point]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -367,13 +372,13 @@ void MyView::PrepareUBOs() {
 	m_lightUBO[Light::Directional]->BindRange(index, 0, size);
 	m_lightUBO[Light::Directional]->BufferData(scene_->getAllDirectionalLights()[0], scene_->getAllDirectionalLights().size());
 
-	/*index += size;
+	index += size;
 	size = sizeof(PointLight) * scene_->getAllPointLights().size();
 	m_lightUBO[Light::Point] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
 	m_lightUBO[Light::Point]->BindRange(index, 0, size);
 	m_lightUBO[Light::Point]->BufferData(scene_->getAllPointLights()[0], scene_->getAllPointLights().size());
 
-	index += size;
+	/*index += size;
 	size = sizeof(SpotLight) * scene_->getAllSpotLights().size();
 	m_lightUBO[Light::Spot] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
 	m_lightUBO[Light::Spot]->BindRange(index, 0, size);
@@ -399,8 +404,11 @@ void MyView::PrepareShaders() {
 	m_vsLight = new Shader(GL_VERTEX_SHADER);
 	m_vsLight->LoadFile("resource:///post_vs.glsl");
 
-	m_fsLight = new Shader(GL_FRAGMENT_SHADER);
-	m_fsLight->LoadFile("resource:///light_fs.glsl");
+	m_fsLight[Light::Directional] = new Shader(GL_FRAGMENT_SHADER);
+	m_fsLight[Light::Directional]->LoadFile("resource:///directional_light_fs.glsl");
+
+	m_fsLight[Light::Point] = new Shader(GL_FRAGMENT_SHADER);
+	m_fsLight[Light::Point]->LoadFile("resource:///point_light_fs.glsl");
 }
 
 void MyView::PreparePrograms() {
@@ -447,10 +455,10 @@ void MyView::PreparePrograms() {
 	p->BindBlock(m_materialUBO, "block_material");
 
 	p = new ShaderProgram();
-	m_lightProgram = p;
+	m_lightProgram[Light::Directional] = p;
 
 	p->AddShader(m_vsLight);
-	p->AddShader(m_fsLight);
+	p->AddShader(m_fsLight[Light::Directional]);
 
 	p->AddInAttribute("vertex_coord");
 
@@ -459,6 +467,20 @@ void MyView::PreparePrograms() {
 	p->Link();
 
 	p->BindBlock(m_lightUBO[Light::Directional], "block_light");
+
+	p = new ShaderProgram();
+	m_lightProgram[Light::Point] = p;
+
+	p->AddShader(m_vsLight);
+	p->AddShader(m_fsLight[Light::Point]);
+
+	p->AddInAttribute("vertex_coord");
+
+	p->AddOutAttribute("fragment_colour");
+
+	p->Link();
+
+	p->BindBlock(m_lightUBO[Light::Point], "block_light");
 }
 
 void MyView::PrepareMeshData() {
@@ -701,12 +723,23 @@ void MyView::DrawEnvironment() {
 }
 
 void MyView::DrawLights() {
-	m_lightProgram->SetActive();
-	m_lightVAO->SetActive();
+	m_lightProgram[Light::Directional]->SetActive();
+	m_lightVAO[Light::Directional]->SetActive();
 
-	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
-	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
-	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	m_lightProgram[Light::Point]->SetActive();
+	m_lightVAO[Light::Point]->SetActive();
+
+	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	VertexArrayObject::Reset();
@@ -746,7 +779,7 @@ void MyView::UpdateLights() {
 	}
 	m_lightUBO[Light::Directional]->BufferData(dLights);
 
-	/*std::vector<PointLight> pLights;
+	std::vector<PointLight> pLights;
 	for (const auto &light : scene_->getAllPointLights()) {
 		PointLight p;
 		p.position = (const glm::vec3&)light.getPosition();
@@ -756,7 +789,7 @@ void MyView::UpdateLights() {
 	}
 	m_lightUBO[Light::Point]->BufferData(pLights);
 
-	std::vector<SpotLight> sLights;
+	/*std::vector<SpotLight> sLights;
 	for (const auto &light : scene_->getAllSpotLights()) {
 		SpotLight s;
 		s.position = (const glm::vec3&)light.getPosition();

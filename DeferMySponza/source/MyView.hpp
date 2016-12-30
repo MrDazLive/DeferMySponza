@@ -77,7 +77,7 @@ private:
 		NonStaticVOs *m_nonStaticVOs{ nullptr };
 		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
 
-		VertexArrayObject *m_lightVAO{ nullptr };
+		VertexArrayObject *m_lightVAO[3]{ nullptr };
 		VertexBufferObject *m_lightVBO{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
@@ -104,12 +104,12 @@ private:
 			NonInstanced = 1
 		};
 
-		ShaderProgram *m_lightProgram{ nullptr };
+		ShaderProgram *m_lightProgram[3]{ nullptr };
 		ShaderProgram *m_environmentProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
 		Shader *m_vsLight{ nullptr };
-		Shader *m_fsLight{ nullptr };
+		Shader *m_fsLight[3]{ nullptr };
 
 		Shader *m_vsInstanced{ nullptr };
 		Shader *m_vsNonInstanced{ nullptr };
