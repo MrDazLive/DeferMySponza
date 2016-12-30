@@ -134,5 +134,8 @@
     <None Include="shaders\point_light_fs.glsl">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="shaders\spot_light_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

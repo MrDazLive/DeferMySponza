@@ -3,6 +3,8 @@
 struct Light {
 	vec3 position;
 	float range;
+	vec3 direction;
+	float coneAngle;
 	vec3 intensity;
 	float pad1;
 };
@@ -35,14 +37,21 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 	return vec3(diffuse) * Colour * lightIntensity;
 }
 
-vec3 getPoint(Light l) {
-	vec3 dir = WorldPosition - l.position;
+vec3 getSpot(Light l) {
+	vec3 dir = normalize(WorldPosition - l.position);
 	float dis = length(dir);
 	dir = normalize(dir);
 
-	float att = l.range / (dis * dis);
+	float fac = dot(l.direction, dir);
+	float ang = cos(l.coneAngle / 2);
 
-	return att * getInternal(dir, l.intensity);
+	if(fac > ang) {
+		float dAtt = l.range / (dis * dis);
+		float cAtt = 1 - ((1 - fac) / (1 - ang));
+
+		return dAtt * cAtt * getInternal(dir, l.intensity);
+	}
+	return vec3(0);
 }
 
 void main(void) {
@@ -51,7 +60,7 @@ void main(void) {
    	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	
 	fragment_colour = vec3(0);
-	for(int i = 0; i < 20; i++) {
-		fragment_colour += getPoint(light[i]);
+	for(int i = 0; i < 3; i++) {
+		fragment_colour += getSpot(light[i]);
 	}
 }

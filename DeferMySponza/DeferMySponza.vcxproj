@@ -352,6 +352,7 @@
     <None Include="shaders\anti_aliasing_fs.glsl" />
     <None Include="shaders\point_light_fs.glsl" />
     <None Include="shaders\post_vs.glsl" />
+    <None Include="shaders\spot_light_fs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
