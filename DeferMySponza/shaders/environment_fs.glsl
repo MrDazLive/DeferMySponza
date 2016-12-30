@@ -1,4 +1,4 @@
-#version 420
+#version 330
 
 struct Material {
 	vec3 diffuse;
@@ -30,6 +30,9 @@ in vec2 varying_texture_coordinate;
 flat in int fixed_material;
 
 layout(location = 0)out vec3 fragment_colour;
+layout(location = 1)out vec3 fragment_position;
+layout(location = 2)out vec3 fragment_normal;
+layout(location = 3)out vec3 fragment_coordinate;
 
 vec3 bumpNormal(vec2 coord) {
 	vec3 n = normalize(varying_normal);
@@ -45,16 +48,15 @@ vec3 bumpNormal(vec2 coord) {
 }
 
 void main(void) {	
+	fragment_position = varying_position;
+	fragment_coordinate = vec3(varying_texture_coordinate, 0);
 	if(material[fixed_material].mainTexture < 6) {
-		vec2 coord = varying_texture_coordinate;
-		vec3 mT = texture(mainTexture[material[fixed_material].mainTexture], coord).xyz;
+		vec3 mT = texture(mainTexture[material[fixed_material].mainTexture], varying_texture_coordinate).xyz;
 
-		vec3 normal = bumpNormal(coord);
-
+		fragment_normal = bumpNormal(varying_texture_coordinate);
 		fragment_colour = mT * material[fixed_material].diffuse * ambience;
 	} else {
-		vec3 normal = varying_normal;
-		
+		fragment_normal = varying_normal;
 		fragment_colour = material[fixed_material].diffuse * ambience;
 	}
 }

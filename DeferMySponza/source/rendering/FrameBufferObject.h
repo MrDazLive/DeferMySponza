@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <GL/glcorearb.h>
 
 class Texture;
@@ -26,8 +27,9 @@ public:
 	void SetRead();
 	void LogInfo();
 	void BlitTexture(const Texture *texture, const GLuint width, const GLuint height, GLuint target = 0);
-	void AttachTexture(GLenum attatchment, const Texture *texture);
+	void AttachTexture(const Texture *texture, bool drawBuffer = true);
 #pragma endregion
 private:
 	GLuint m_id{ 0 };
+	std::vector<GLenum> m_drawBuffer;
 };

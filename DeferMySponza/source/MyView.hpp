@@ -62,14 +62,24 @@ private:
 		Mode m_renderMode{ Mode::Deferred };
 	#pragma endregion
 	#pragma region Geometry Objects
+		enum GBuffer {
+			Colour = 0,
+			Position = 1,
+			Normal = 2,
+			Coordinate = 3
+		};
+
 		FrameBufferObject *m_fbo{ nullptr };
 		Texture *m_dbuffer{ nullptr };
-		Texture *m_gbuffer{ nullptr };
+		Texture *m_gBuffer[4]{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
 		InstanceVOs *m_instancedVOs{ nullptr };
 		NonStaticVOs *m_nonStaticVOs{ nullptr };
 		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
+
+		VertexArrayObject *m_lightVAO{ nullptr };
+		VertexBufferObject *m_lightVBO{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
 		VertexBufferObject *m_materialUBO{ nullptr };
@@ -95,9 +105,13 @@ private:
 			NonInstanced = 1
 		};
 
+		ShaderProgram *m_lightProgram{ nullptr };
 		ShaderProgram *m_environmentProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
+		Shader *m_vsLight{ nullptr };
+		Shader *m_fsLight{ nullptr };
+
 		Shader *m_vsInstanced{ nullptr };
 		Shader *m_vsNonInstanced{ nullptr };
 		Shader *m_fsEnvironment{ nullptr };
@@ -142,6 +156,7 @@ private:
 	void PostProcessRender();
 
 	void DrawEnvironment();
+	void DrawLights();
 #pragma endregion
 #pragma region Additional Methods
 	void UpdateViewTransform();

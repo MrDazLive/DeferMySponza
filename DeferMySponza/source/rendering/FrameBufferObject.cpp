@@ -73,14 +73,19 @@ void FrameBufferObject::BlitTexture(const Texture *texture, const GLuint width, 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target);
 	this->SetRead();
 
+	glReadBuffer(texture->getAttachment());
 	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	FrameBufferObject::Reset();
 }
 
-void FrameBufferObject::AttachTexture(GLenum attatchment, const Texture *texture) {
+void FrameBufferObject::AttachTexture(const Texture *texture, bool drawBuffer) {
 	this->SetDraw();
-	glFramebufferTexture2D(GL_FRAMEBUFFER, attatchment, texture->getTarget(), texture->getID(), 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, texture->getAttachment(), texture->getTarget(), texture->getID(), 0);
+	if (drawBuffer) {
+		m_drawBuffer.push_back(texture->getAttachment());
+		glDrawBuffers(m_drawBuffer.size(), m_drawBuffer.data());
+	}
 	FrameBufferObject::Reset(GL_DRAW_FRAMEBUFFER);
 }
 

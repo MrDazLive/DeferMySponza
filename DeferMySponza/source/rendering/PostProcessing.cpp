@@ -59,7 +59,7 @@ PostProcessing::~PostProcessing() {
 
 void PostProcessing::setSourceTexture(Texture *texture) {
 	m_tex = texture;
-	m_fbo->AttachTexture(GL_COLOR_ATTACHMENT0, m_tex);
+	m_fbo->AttachTexture(m_tex);
 }
 
 void PostProcessing::setTextureSize(const GLsizei width, const GLsizei height) {

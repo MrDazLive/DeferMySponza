@@ -6,9 +6,10 @@
 
 #pragma region Constructors/Destructors
 
-Texture::Texture(GLenum target) {
+Texture::Texture(GLenum target, GLenum attachment) {
 	glGenTextures(1, &m_id);
 	m_target = target;
+	m_attachment = attachment;
 }
 
 Texture::~Texture() {
@@ -24,6 +25,10 @@ GLuint Texture::getID() const {
 
 GLenum Texture::getTarget() const {
 	return m_target;
+}
+
+GLenum Texture::getAttachment() const {
+	return m_attachment;
 }
 
 #pragma endregion

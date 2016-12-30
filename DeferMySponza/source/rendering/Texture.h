@@ -6,12 +6,13 @@
 class Texture {
 public:
 #pragma region Constructors/Destructors
-	Texture(GLenum target);
+	Texture(GLenum target, GLenum attachment = GL_COLOR_ATTACHMENT0);
 	~Texture();
 #pragma endregion
 #pragma region Getters/Setters
 	GLuint getID() const;
 	GLenum getTarget() const;
+	GLenum getAttachment() const;
 #pragma endregion
 #pragma region Static Methods
 	static void Reset(const GLenum target);
@@ -25,4 +26,5 @@ public:
 private:
 	GLuint m_id;
 	GLenum m_target;
+	GLenum m_attachment;
 };
