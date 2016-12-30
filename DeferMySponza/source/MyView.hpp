@@ -58,20 +58,19 @@ private:
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
-		PostProcess m_postMode{ PostProcess::Anti_Aliasing };
+		PostProcess m_postMode{ PostProcess::Off };
 		Mode m_renderMode{ Mode::Deferred };
 	#pragma endregion
 	#pragma region Geometry Objects
 		enum GBuffer {
 			Colour = 0,
 			Position = 1,
-			Normal = 2,
-			Coordinate = 3
+			Normal = 2
 		};
 
 		FrameBufferObject *m_fbo{ nullptr };
 		Texture *m_dbuffer{ nullptr };
-		Texture *m_gBuffer[4]{ nullptr };
+		Texture *m_gBuffer[3]{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
 		InstanceVOs *m_instancedVOs{ nullptr };

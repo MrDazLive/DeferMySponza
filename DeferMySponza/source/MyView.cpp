@@ -152,7 +152,6 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-	m_gBuffer[GBuffer::Coordinate]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_antiAliasing->setTextureSize(width, height);
 }
 
@@ -165,7 +164,6 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_gBuffer[GBuffer::Colour];
 	delete m_gBuffer[GBuffer::Position];
 	delete m_gBuffer[GBuffer::Normal];
-	delete m_gBuffer[GBuffer::Coordinate];
 
 	delete m_instancedVOs;
 	delete m_nonStaticVOs;
@@ -528,31 +526,24 @@ void MyView::PrepareGBs() {
 
 	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_gBuffer[GBuffer::Colour]->SetActive();
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_fbo->AttachTexture(m_gBuffer[GBuffer::Colour]);
 
 	m_gBuffer[GBuffer::Position] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
 	m_gBuffer[GBuffer::Position]->SetActive();
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_fbo->AttachTexture(m_gBuffer[GBuffer::Position]);
 
 	m_gBuffer[GBuffer::Normal] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
 	m_gBuffer[GBuffer::Normal]->SetActive();
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_fbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
-
-	m_gBuffer[GBuffer::Coordinate] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
-	m_gBuffer[GBuffer::Coordinate]->SetActive();
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	m_gBuffer[GBuffer::Coordinate]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_fbo->AttachTexture(m_gBuffer[GBuffer::Coordinate]);
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
@@ -627,12 +618,11 @@ void MyView::ForwardRender() {
 void MyView::DeferredRender() {
 	m_queryDeferredRender->Begin();
 
-	m_fbo->SetDraw();
+	m_fbo->SetActive();
 
 	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
 
 	DrawEnvironment();
 
@@ -643,6 +633,8 @@ void MyView::DeferredRender() {
 	UpdateLights();
 
 	DrawLights();
+
+	glDisable(GL_BLEND);
 
 	m_fbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y);
 
@@ -712,9 +704,9 @@ void MyView::DrawLights() {
 	m_lightProgram->SetActive();
 	m_lightVAO->SetActive();
 
-	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Colour], "gColourMap");
-	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Position], "gPositionMap", 1);
-	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Normal], "gNormalMap", 2);
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	VertexArrayObject::Reset();
@@ -762,7 +754,7 @@ void MyView::UpdateLights() {
 		p.range = light.getRange();
 		pLights.push_back(p);
 	}
-	m_lightUBO[Light::Point]->BufferData(dLights);
+	m_lightUBO[Light::Point]->BufferData(pLights);
 
 	std::vector<SpotLight> sLights;
 	for (const auto &light : scene_->getAllSpotLights()) {
@@ -773,7 +765,7 @@ void MyView::UpdateLights() {
 		s.range = light.getRange();
 		sLights.push_back(s);
 	}
-	m_lightUBO[Light::Spot]->BufferData(dLights);*/
+	m_lightUBO[Light::Spot]->BufferData(sLights);*/
 }
 
 #pragma endregion
