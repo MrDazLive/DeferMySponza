@@ -75,21 +75,22 @@ struct MyView::NonInstanceVOs {
 
 struct MyView::DirectionalLight {
 	glm::vec3 direction;
+	float pad;
 	glm::vec3 intensity;
 };
 
 struct MyView::PointLight {
 	glm::vec3 position;
-	glm::vec3 intensity;
 	float range;
+	glm::vec3 intensity;
 };
 
 struct MyView::SpotLight {
 	glm::vec3 position;
-	glm::vec3 direction;
-	glm::vec3 intensity;
 	float range;
+	glm::vec3 direction;
 	float coneAngle;
+	glm::vec3 intensity;
 };
 
 #pragma endregion
@@ -161,9 +162,9 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_nonStaticVOs;
 	delete m_nonInstancedVOs;
 
-	delete m_lightVBO[Light::Directional];
-	delete m_lightVBO[Light::Point];
-	delete m_lightVBO[Light::Spot];
+	delete m_lightUBO[Light::Directional];
+	delete m_lightUBO[Light::Point];
+	delete m_lightUBO[Light::Spot];
 
 	delete m_materialUBO;
 	for (Texture *ptr : m_mainTexture) {
@@ -173,9 +174,9 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_environmentProgram[Program::Instanced];
 	delete m_environmentProgram[Program::NonInstanced];
 
-	delete m_instancedVS;
-	delete m_nonInstancedVS;
-	delete m_meshFS;
+	delete m_vsInstanced;
+	delete m_vsNonInstanced;
+	delete m_fsEnvironment;
 
 	delete m_queryForwardRender;
 	delete m_queryDeferredRender;
@@ -324,16 +325,32 @@ void MyView::PrepareVBOs() {
 	vertices.clear();
 	elements.clear();
 	instances.clear();
-
-	m_lightVBO[Light::Directional] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightVBO[Light::Point] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightVBO[Light::Spot] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 }
 
 void MyView::PrepareUBOs() {
+	GLuint index = 0;
+	GLsizeiptr size = sizeof(scene::Material) * 7;
 	m_materialUBO = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	m_materialUBO->BindRange(0, 0, sizeof(scene::Material) * 7);
+	m_materialUBO->BindRange(index, 0, size);
 	m_materialUBO->BufferData(scene_->getAllMaterials()[0], 7);
+
+	index += size;
+	size = sizeof(DirectionalLight) * scene_->getAllDirectionalLights().size();
+	m_lightUBO[Light::Directional] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightUBO[Light::Directional]->BindRange(index, 0, size);
+	m_lightUBO[Light::Directional]->BufferData(scene_->getAllDirectionalLights()[0], scene_->getAllDirectionalLights().size());
+
+	index += size;
+	size = sizeof(PointLight) * scene_->getAllPointLights().size();
+	m_lightUBO[Light::Point] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightUBO[Light::Point]->BindRange(index, 0, size);
+	m_lightUBO[Light::Point]->BufferData(scene_->getAllPointLights()[0], scene_->getAllPointLights().size());
+
+	index += size;
+	size = sizeof(SpotLight) * scene_->getAllSpotLights().size();
+	m_lightUBO[Light::Spot] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightUBO[Light::Spot]->BindRange(index, 0, size);
+	m_lightUBO[Light::Spot]->BufferData(scene_->getAllSpotLights()[0], scene_->getAllSpotLights().size());
 }
 
 void MyView::PrepareTimers() {
@@ -343,22 +360,22 @@ void MyView::PrepareTimers() {
 }
 
 void MyView::PrepareShaders() {
-	m_instancedVS = new Shader(GL_VERTEX_SHADER);
-	m_instancedVS->LoadFile("resource:///instanced_vs.glsl");
+	m_vsInstanced = new Shader(GL_VERTEX_SHADER);
+	m_vsInstanced->LoadFile("resource:///instanced_environment_vs.glsl");
 
-	m_nonInstancedVS = new Shader(GL_VERTEX_SHADER);
-	m_nonInstancedVS->LoadFile("resource:///nonInstanced_vs.glsl");
+	m_vsNonInstanced = new Shader(GL_VERTEX_SHADER);
+	m_vsNonInstanced->LoadFile("resource:///non_instanced_environment_vs.glsl");
 
-	m_meshFS = new Shader(GL_FRAGMENT_SHADER);
-	m_meshFS->LoadFile("resource:///mesh_fs.glsl");
+	m_fsEnvironment = new Shader(GL_FRAGMENT_SHADER);
+	m_fsEnvironment->LoadFile("resource:///environment_fs.glsl");
 }
 
 void MyView::PreparePrograms() {
 	ShaderProgram *p = new ShaderProgram();
 	m_environmentProgram[Program::Instanced] = p;
 
-	p->AddShader(m_instancedVS);
-	p->AddShader(m_meshFS);
+	p->AddShader(m_vsInstanced);
+	p->AddShader(m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position");
 	p->AddInAttribute("vertex_normal");
@@ -376,8 +393,8 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_environmentProgram[Program::NonInstanced] = p;
 
-	p->AddShader(m_nonInstancedVS);
-	p->AddShader(m_meshFS);
+	p->AddShader(m_vsNonInstanced);
+	p->AddShader(m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position");
 	p->AddInAttribute("vertex_normal");
@@ -564,7 +581,7 @@ void MyView::DrawEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_environmentProgram[Program::Instanced]->SetActive();
-	m_environmentProgram[Program::Instanced]->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	//m_environmentProgram[Program::Instanced]->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
 	m_environmentProgram[Program::Instanced]->BindUniformM4(combined_transform, "combined_transform");
 	m_environmentProgram[Program::Instanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
@@ -580,7 +597,7 @@ void MyView::DrawEnvironment() {
 	}
 
 	m_environmentProgram[Program::NonInstanced]->SetActive();
-	m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
+	//m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getCamera().getPosition(), "camera_position");
 	m_environmentProgram[Program::NonInstanced]->BindUniformM4(combined_transform, "combined_transform");
 	m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
@@ -634,7 +651,7 @@ void MyView::UpdateLights() {
 		d.intensity = (const glm::vec3&)light.getIntensity();
 		dLights.push_back(d);
 	}
-	m_lightVBO[Light::Directional]->BufferData(dLights);
+	m_lightUBO[Light::Directional]->BufferData(dLights);
 
 	std::vector<PointLight> pLights;
 	for (const auto &light : scene_->getAllPointLights()) {
@@ -644,7 +661,7 @@ void MyView::UpdateLights() {
 		p.range = light.getRange();
 		pLights.push_back(p);
 	}
-	m_lightVBO[Light::Point]->BufferData(dLights);
+	m_lightUBO[Light::Point]->BufferData(dLights);
 
 	std::vector<SpotLight> sLights;
 	for (const auto &light : scene_->getAllSpotLights()) {
@@ -655,7 +672,7 @@ void MyView::UpdateLights() {
 		s.range = light.getRange();
 		sLights.push_back(s);
 	}
-	m_lightVBO[Light::Spot]->BufferData(dLights);
+	m_lightUBO[Light::Spot]->BufferData(dLights);
 }
 
 #pragma endregion

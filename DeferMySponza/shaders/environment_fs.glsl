@@ -1,4 +1,4 @@
-#version 330
+#version 420
 
 struct Material {
 	vec3 diffuse;
@@ -21,7 +21,6 @@ uniform	sampler2D mainTexture[7];
 uniform	sampler2D normalTexture[7];
 
 uniform vec3 ambience;
-uniform vec3 camera_position;
 
 in vec3 varying_position;
 in vec3 varying_normal;
@@ -31,8 +30,6 @@ in vec2 varying_texture_coordinate;
 flat in int fixed_material;
 
 layout(location = 0)out vec3 fragment_colour;
-
-vec3 light_dir = vec3(1, .5f, -1);
 
 vec3 bumpNormal(vec2 coord) {
 	vec3 n = normalize(varying_normal);
@@ -47,35 +44,17 @@ vec3 bumpNormal(vec2 coord) {
 	return normalize(TBN * bump);
 }
 
-vec2 parallaxMapping() { 
-	vec3 n = normalize(varying_normal);
-	vec3 t = normalize(varying_tangent);
-	t = normalize(t - dot(t, n) * n);
-	vec3 b = cross(t, n);
-	mat3 TBN = mat3(t, b, n);
-
-	vec3 tPos = (camera_position);
-	vec3 tCam = (varying_position);
-	vec3 viewDir = normalize(tCam - tPos);
-	viewDir = viewDir * TBN;
-
-	return varying_texture_coordinate +
-		(viewDir.xy) * texture(normalTexture[material[fixed_material].normalTexture], varying_texture_coordinate).r * .3f;
-}
-
 void main(void) {	
 	if(material[fixed_material].mainTexture < 6) {
-		vec2 coord = varying_texture_coordinate;// parallaxMapping();
+		vec2 coord = varying_texture_coordinate;
 		vec3 mT = texture(mainTexture[material[fixed_material].mainTexture], coord).xyz;
 
 		vec3 normal = bumpNormal(coord);
-		float i = clamp(dot(normal, normalize(light_dir)), 0, 1);
 
-		fragment_colour = mT * material[fixed_material].diffuse * (vec3(i) + ambience);
+		fragment_colour = mT * material[fixed_material].diffuse * ambience;
 	} else {
 		vec3 normal = varying_normal;
-		float i = clamp(dot(normal, normalize(light_dir)), 0, 1);
 		
-		fragment_colour = material[fixed_material].diffuse * (vec3(i) + ambience);
+		fragment_colour = material[fixed_material].diffuse * ambience;
 	}
 }

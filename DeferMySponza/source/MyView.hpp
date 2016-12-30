@@ -70,18 +70,19 @@ private:
 		InstanceVOs *m_instancedVOs{ nullptr };
 		NonStaticVOs *m_nonStaticVOs{ nullptr };
 		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
-
-		enum Light {
-			Directional = 0,
-			Point = 1,
-			Spot = 2
-		};
-		VertexBufferObject *m_lightVBO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
 		VertexBufferObject *m_materialUBO{ nullptr };
 		Texture *m_mainTexture[7]{ nullptr };
 		Texture *m_normalTexture[7]{ nullptr };
+	#pragma endregion
+	#pragma region Lights
+		enum Light {
+			Directional = 0,
+			Point = 1,
+			Spot = 2
+		};
+		VertexBufferObject *m_lightUBO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
@@ -97,9 +98,9 @@ private:
 		ShaderProgram *m_environmentProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
-		Shader *m_instancedVS{ nullptr };
-		Shader *m_nonInstancedVS{ nullptr };
-		Shader *m_meshFS{ nullptr };
+		Shader *m_vsInstanced{ nullptr };
+		Shader *m_vsNonInstanced{ nullptr };
+		Shader *m_fsEnvironment{ nullptr };
 	#pragma endregion
 	#pragma region Post-Processing
 		PostProcessing *m_antiAliasing;

@@ -345,9 +345,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\cel_shading_fs.glsl" />
-    <None Include="shaders\instanced_vs.glsl" />
-    <None Include="shaders\mesh_fs.glsl" />
-    <None Include="shaders\nonInstanced_vs.glsl" />
+    <None Include="shaders\instanced_environment_vs.glsl" />
+    <None Include="shaders\environment_fs.glsl" />
+    <None Include="shaders\non_instanced_environment_vs.glsl" />
     <None Include="shaders\anti_aliasing_fs.glsl" />
     <None Include="shaders\post_vs.glsl" />
   </ItemGroup>
