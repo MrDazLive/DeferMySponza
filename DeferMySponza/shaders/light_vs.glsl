@@ -16,4 +16,5 @@ flat out Light fixed_light;
 void main(void) {
     gl_Position = vec4(vertex_coord, 0.0, 1.0);
 	fixed_light = light;
+	fixed_light.direction = normalize(fixed_light.direction);
 }

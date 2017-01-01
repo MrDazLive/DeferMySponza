@@ -33,7 +33,7 @@ float isEdge() {
 		abs(avg[2]-avg[6])
 		)/4.;
 
-	return threshold(0.25,.4,clamp(1.8*delta,0.0,1.0));
+	return threshold(0.05,.4,clamp(1.8*delta,0.0,1.0));
 }
 
 void main(void) {

@@ -54,7 +54,7 @@ void main(void) {
 		fragment_normal = bumpNormal(varying_texture_coordinate);
 		fragment_colour = mT;
 	} else {
-		fragment_normal = varying_normal;
+		fragment_normal = normalize(varying_normal);
 		fragment_colour = vec3(1);
 	}
 	fragment_colour *= material[fixed_material].diffuse * ambience;

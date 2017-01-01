@@ -14,6 +14,8 @@ uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
 uniform sampler2DRect normalMap;
 
+uniform vec3 ambience;
+
 flat in Light fixed_light;
 
 layout(location = 0)out vec3 fragment_colour;
@@ -23,15 +25,15 @@ vec3 WorldPosition;
 vec3 Normal;
 
 vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
-	float diffuse = clamp(dot(Normal, normalize(lightDirection)), 0, 1);
+	float diffuse = max(dot(lightDirection, Normal), 0);
 	if(diffuse > 0) {
 		vec3 dir = normalize(eyePosition - WorldPosition);
 		vec3 ref = normalize(reflect(lightDirection, Normal));
 
-		float specular = clamp(dot(dir, ref), 0, 1);
+		float specular = max(dot(dir, -ref), 0);
 		return vec3(diffuse + specular) * Colour * lightIntensity;
 	}
-	return vec3(diffuse) * Colour * lightIntensity;
+	return vec3(0);
 }
 
 vec3 getDirectional(Light l) {
@@ -43,5 +45,5 @@ void main(void) {
    	WorldPosition = texture(positionMap, gl_FragCoord.xy).xyz;
    	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	
-	fragment_colour = getDirectional(fixed_light);
+	fragment_colour = getDirectional(fixed_light) / ambience;
 }

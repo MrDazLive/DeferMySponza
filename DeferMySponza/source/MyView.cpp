@@ -667,6 +667,15 @@ void MyView::ForwardRender() {
 
 	DrawEnvironment();
 
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+
+	UpdateLights();
+
+	DrawLights();
+
+	glDisable(GL_BLEND);
 	m_queryForwardRender->End();
 }
 
@@ -699,6 +708,8 @@ void MyView::DeferredRender() {
 	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
 
 	FrameBufferObject::Reset();
+	FrameBufferObject::Reset(GL_DRAW_FRAMEBUFFER);
+	FrameBufferObject::Reset(GL_READ_FRAMEBUFFER);
 
 	m_queryDeferredRender->End();
 }
@@ -761,7 +772,7 @@ void MyView::DrawEnvironment() {
 }
 
 void MyView::DrawLights() {
-	/*m_lightProgram[Light::Directional]->SetActive();
+	m_lightProgram[Light::Directional]->SetActive();
 	m_lightVAO[Light::Directional]->SetActive();
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
@@ -769,7 +780,9 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
-	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);*/
+	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
+
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
 
 	m_lightProgram[Light::Point]->SetActive();
 	m_lightVAO[Light::Point]->SetActive();
@@ -789,8 +802,8 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
-	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);
-	VertexArrayObject::Reset();*/
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);*/
+	VertexArrayObject::Reset();
 }
 
 #pragma endregion

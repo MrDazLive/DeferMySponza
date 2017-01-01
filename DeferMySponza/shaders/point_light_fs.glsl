@@ -23,7 +23,7 @@ vec3 WorldPosition;
 vec3 Normal;
 
 vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
-	float diffuse = clamp(dot(Normal, normalize(lightDirection)), 0, 1);
+	float diffuse = clamp(dot(Normal, lightDirection), 0, 1);
 	if(diffuse > 0) {
 		vec3 dir = normalize(eyePosition - WorldPosition);
 		vec3 ref = normalize(reflect(lightDirection, Normal));
@@ -31,7 +31,7 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 		float specular = clamp(dot(dir, ref), 0, 1);
 		return vec3(diffuse + specular) * Colour * lightIntensity;
 	}
-	return vec3(diffuse) * Colour * lightIntensity;
+	return vec3(0);
 }
 
 vec3 getPoint(Light l) {
