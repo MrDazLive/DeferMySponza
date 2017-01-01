@@ -2,13 +2,10 @@
 
 struct Light {
 	vec3 position;
-	float range;
+	vec3 direction;
 	vec3 intensity;
-	float pad1;
-};
-
-layout (std140) uniform block_light {
-	Light light[20];
+	float range;
+	float coneAngle;
 };
 
 uniform vec3 eyePosition;
@@ -16,6 +13,8 @@ uniform vec3 eyePosition;
 uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
 uniform sampler2DRect normalMap;
+
+flat in Light fixed_light;
 
 layout(location = 0)out vec3 fragment_colour;
 
@@ -36,11 +35,11 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 }
 
 vec3 getPoint(Light l) {
-	vec3 dir = WorldPosition - l.position;
+	vec3 dir = l.position - WorldPosition;
 	float dis = length(dir);
 	dir = normalize(dir);
 
-	float att = l.range / (dis * dis);
+	float att = l.range * l.range / (dis * dis);
 
 	return att * getInternal(dir, l.intensity);
 }
@@ -50,8 +49,5 @@ void main(void) {
    	WorldPosition = texture(positionMap, gl_FragCoord.xy).xyz;
    	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	
-	fragment_colour = vec3(0);
-	for(int i = 0; i < 20; i++) {
-		fragment_colour += getPoint(light[i]);
-	}
+	fragment_colour = getPoint(fixed_light);
 }

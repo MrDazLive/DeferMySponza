@@ -75,25 +75,21 @@ struct MyView::NonInstanceVOs {
 
 struct MyView::DirectionalLight {
 	glm::vec3 direction;
-	float pad1;
 	glm::vec3 intensity;
-	float pad2;
 };
 
 struct MyView::PointLight {
 	glm::vec3 position;
-	float range;
 	glm::vec3 intensity;
-	float pad1;
+	float range;
 };
 
 struct MyView::SpotLight {
 	glm::vec3 position;
-	float range;
 	glm::vec3 direction;
-	float coneAngle;
 	glm::vec3 intensity;
-	float pad1;
+	float range;
+	float coneAngle;
 };
 
 #pragma endregion
@@ -134,9 +130,9 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 	PrepareTimers();
 
 	m_antiAliasing = new PostProcessing("resource:///post_vs.glsl", "resource:///anti_aliasing_fs.glsl");
-	m_antiAliasing->setSourceTexture(m_gBuffer[GBuffer::Colour]);
+	m_antiAliasing->setSourceTexture(m_lBuffer);
 	m_celShading = new PostProcessing("resource:///post_vs.glsl", "resource:///cel_shading_fs.glsl");
-	m_celShading->setSourceTexture(m_gBuffer[GBuffer::Colour]);
+	m_celShading->setSourceTexture(m_lBuffer);
 }
 
 void MyView::windowViewDidReset(tygra::Window * window,
@@ -152,6 +148,7 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_lBuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_antiAliasing->setTextureSize(width, height);
 }
 
@@ -159,8 +156,10 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_antiAliasing;
 	delete m_celShading;
 
-	delete m_fbo;
+	delete m_gFbo;
+	delete m_lFbo;
 	delete m_dbuffer;
+	delete m_lBuffer;
 	delete m_gBuffer[GBuffer::Colour];
 	delete m_gBuffer[GBuffer::Position];
 	delete m_gBuffer[GBuffer::Normal];
@@ -172,11 +171,10 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_lightVAO[Light::Directional];
 	delete m_lightVAO[Light::Point];
 	delete m_lightVAO[Light::Spot];
-	delete m_lightVBO;
-
-	delete m_lightUBO[Light::Directional];
-	delete m_lightUBO[Light::Point];
-	delete m_lightUBO[Light::Spot];
+	delete m_lightVBO[Light::Directional];
+	delete m_lightVBO[Light::Point];
+	delete m_lightVBO[Light::Spot];
+	delete m_quadVBO;
 
 	delete m_materialUBO;
 	for (Texture *ptr : m_mainTexture) {
@@ -315,18 +313,31 @@ void MyView::PrepareVAOs() {
 
 	m_lightVAO[Light::Directional] = new VertexArrayObject();
 	m_lightVAO[Light::Directional]->SetActive();
-	m_lightVBO->SetActive();
+	m_quadVBO->SetActive();
 	m_lightVAO[Light::Directional]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
+	m_lightVBO[Light::Directional]->SetActive();
+	m_lightVAO[Light::Directional]->AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVAO[Light::Directional]->AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 
 	m_lightVAO[Light::Point] = new VertexArrayObject();
 	m_lightVAO[Light::Point]->SetActive();
-	m_lightVBO->SetActive();
+	m_quadVBO->SetActive();
 	m_lightVAO[Light::Point]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
+	m_lightVBO[Light::Point]->SetActive();
+	m_lightVAO[Light::Point]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVAO[Light::Point]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVAO[Light::Point]->AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 
 	m_lightVAO[Light::Spot] = new VertexArrayObject();
 	m_lightVAO[Light::Spot]->SetActive();
-	m_lightVBO->SetActive();
+	m_quadVBO->SetActive();
 	m_lightVAO[Light::Spot]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
+	m_lightVBO[Light::Spot]->SetActive();
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -362,38 +373,21 @@ void MyView::PrepareVBOs() {
 	elements.clear();
 	instances.clear();
 
-	m_lightVBO = new VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	m_quadVBO = new VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	std::vector<glm::vec2> v = { glm::vec2(-1, -1),
 		glm::vec2(1, -1),
 		glm::vec2(1, 1),
 		glm::vec2(-1, 1) };
-	m_lightVBO->BufferData(v);
+	m_quadVBO->BufferData(v);
+	m_lightVBO[Light::Directional] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightVBO[Light::Point] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightVBO[Light::Spot] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 }
 
 void MyView::PrepareUBOs() {
-	GLuint index = 0;
-	GLsizeiptr size = sizeof(scene::Material) * 7;
 	m_materialUBO = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	m_materialUBO->BindRange(index, 0, size);
+	m_materialUBO->BindRange(0, 0, sizeof(scene::Material) * 7);
 	m_materialUBO->BufferData(scene_->getAllMaterials()[0], 7);
-
-	index += size;
-	size = sizeof(DirectionalLight) * scene_->getAllDirectionalLights().size();
-	m_lightUBO[Light::Directional] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightUBO[Light::Directional]->BindRange(index, 0, size);
-	m_lightUBO[Light::Directional]->BufferData(scene_->getAllDirectionalLights()[0], scene_->getAllDirectionalLights().size());
-
-	index += size;
-	size = sizeof(PointLight) * scene_->getAllPointLights().size();
-	m_lightUBO[Light::Point] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightUBO[Light::Point]->BindRange(index, 0, size);
-	m_lightUBO[Light::Point]->BufferData(scene_->getAllPointLights()[0], scene_->getAllPointLights().size());
-
-	index += size;
-	size = sizeof(SpotLight) * scene_->getAllSpotLights().size();
-	m_lightUBO[Light::Spot] = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightUBO[Light::Spot]->BindRange(index, 0, size);
-	m_lightUBO[Light::Spot]->BufferData(scene_->getAllSpotLights()[0], scene_->getAllSpotLights().size());
 }
 
 void MyView::PrepareTimers() {
@@ -413,7 +407,7 @@ void MyView::PrepareShaders() {
 	m_fsEnvironment->LoadFile("resource:///environment_fs.glsl");
 
 	m_vsLight = new Shader(GL_VERTEX_SHADER);
-	m_vsLight->LoadFile("resource:///post_vs.glsl");
+	m_vsLight->LoadFile("resource:///light_vs.glsl");
 
 	m_fsLight[Light::Directional] = new Shader(GL_FRAGMENT_SHADER);
 	m_fsLight[Light::Directional]->LoadFile("resource:///directional_light_fs.glsl");
@@ -442,7 +436,6 @@ void MyView::PreparePrograms() {
 	p->AddOutAttribute("fragment_colour");
 	p->AddOutAttribute("fragment_position");
 	p->AddOutAttribute("fragment_normal");
-	p->AddOutAttribute("fragment_coordinate");
 
 	p->Link();
 
@@ -468,21 +461,51 @@ void MyView::PreparePrograms() {
 
 	p->BindBlock(m_materialUBO, "block_material");
 
-	for (unsigned int i = 0; i < 3; i++) {
-		p = new ShaderProgram();
-		m_lightProgram[i] = p;
+	p = new ShaderProgram();
+	m_lightProgram[Light::Directional] = p;
 
-		p->AddShader(m_vsLight);
-		p->AddShader(m_fsLight[i]);
+	p->AddShader(m_vsLight);
+	p->AddShader(m_fsLight[Light::Directional]);
 
-		p->AddInAttribute("vertex_coord");
+	p->AddInAttribute("vertex_coord");
+	p->AddInAttribute("light.direction");
+	p->AddInAttribute("light.intensity");
 
-		p->AddOutAttribute("fragment_colour");
+	p->AddOutAttribute("fragment_colour");
 
-		p->Link();
+	p->Link();
 
-		p->BindBlock(m_lightUBO[i], "block_light");
-	}
+	p = new ShaderProgram();
+	m_lightProgram[Light::Point] = p;
+
+	p->AddShader(m_vsLight);
+	p->AddShader(m_fsLight[Light::Point]);
+
+	p->AddInAttribute("vertex_coord");
+	p->AddInAttribute("light.position");
+	p->AddInAttribute("light.intensity");
+	p->AddInAttribute("light.range");
+
+	p->AddOutAttribute("fragment_colour");
+
+	p->Link();
+
+	p = new ShaderProgram();
+	m_lightProgram[Light::Spot] = p;
+
+	p->AddShader(m_vsLight);
+	p->AddShader(m_fsLight[Light::Spot]);
+
+	p->AddInAttribute("vertex_coord");
+	p->AddInAttribute("light.position");
+	p->AddInAttribute("light.direction");
+	p->AddInAttribute("light.intensity");
+	p->AddInAttribute("light.range");
+	p->AddInAttribute("light.coneAngle");
+
+	p->AddOutAttribute("fragment_colour");
+
+	p->Link();
 }
 
 void MyView::PrepareMeshData() {
@@ -542,32 +565,41 @@ void MyView::PrepareTextures() {
 }
 
 void MyView::PrepareGBs() {
-	m_fbo = new FrameBufferObject();
+	m_gFbo = new FrameBufferObject();
 
 	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
 	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, 0, 0, GL_DEPTH_COMPONENT, GL_FLOAT);
-	m_fbo->AttachTexture(m_dbuffer, false);
+	m_gFbo->AttachTexture(m_dbuffer, false);
 
 	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_gBuffer[GBuffer::Colour]->SetActive();
 	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_fbo->AttachTexture(m_gBuffer[GBuffer::Colour]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Colour]);
 
 	m_gBuffer[GBuffer::Position] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
 	m_gBuffer[GBuffer::Position]->SetActive();
 	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_fbo->AttachTexture(m_gBuffer[GBuffer::Position]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Position]);
 
 	m_gBuffer[GBuffer::Normal] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
 	m_gBuffer[GBuffer::Normal]->SetActive();
 	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_fbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
+
+	m_lFbo = new FrameBufferObject();
+
+	m_lBuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
+	m_lBuffer->SetActive();
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	m_lBuffer->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_lFbo->AttachTexture(m_lBuffer);
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
@@ -641,13 +673,18 @@ void MyView::ForwardRender() {
 void MyView::DeferredRender() {
 	m_queryDeferredRender->Begin();
 
-	m_fbo->SetActive();
+	m_gFbo->SetActive();
 
 	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
 	DrawEnvironment();
+
+	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y, m_lFbo->getID());
+
+	m_gFbo->SetRead();
+	m_lFbo->SetDraw();
 
 	glDepthMask(GL_FALSE);
 	glDisable(GL_DEPTH_TEST);
@@ -659,7 +696,7 @@ void MyView::DeferredRender() {
 
 	glDisable(GL_BLEND);
 
-	m_fbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y);
+	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
 
 	FrameBufferObject::Reset();
 
@@ -678,7 +715,7 @@ void MyView::PostProcessRender() {
 			break;
 	}
 
-	m_fbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y);
+	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
 
 	m_queryPostProcessing->End();
 }
@@ -724,7 +761,7 @@ void MyView::DrawEnvironment() {
 }
 
 void MyView::DrawLights() {
-	m_lightProgram[Light::Directional]->SetActive();
+	/*m_lightProgram[Light::Directional]->SetActive();
 	m_lightVAO[Light::Directional]->SetActive();
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
@@ -732,9 +769,9 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);*/
 
-	/*m_lightProgram[Light::Point]->SetActive();
+	m_lightProgram[Light::Point]->SetActive();
 	m_lightVAO[Light::Point]->SetActive();
 
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
@@ -742,9 +779,9 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 20);
 
-	m_lightProgram[Light::Spot]->SetActive();
+	/*m_lightProgram[Light::Spot]->SetActive();
 	m_lightVAO[Light::Spot]->SetActive();
 
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
@@ -752,8 +789,8 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);*/
-	VertexArrayObject::Reset();
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);
+	VertexArrayObject::Reset();*/
 }
 
 #pragma endregion
@@ -788,7 +825,7 @@ void MyView::UpdateLights() {
 		d.intensity = (const glm::vec3&)light.getIntensity();
 		dLights.push_back(d);
 	}
-	m_lightUBO[Light::Directional]->BufferData(dLights);
+	m_lightVBO[Light::Directional]->BufferData(dLights);
 
 	std::vector<PointLight> pLights;
 	for (const auto &light : scene_->getAllPointLights()) {
@@ -798,18 +835,20 @@ void MyView::UpdateLights() {
 		p.range = light.getRange();
 		pLights.push_back(p);
 	}
-	m_lightUBO[Light::Point]->BufferData(pLights);
+	m_lightVBO[Light::Point]->BufferData(pLights);
 
 	std::vector<SpotLight> sLights;
+	int i = 0;
 	for (const auto &light : scene_->getAllSpotLights()) {
 		SpotLight s;
 		s.position = (const glm::vec3&)light.getPosition();
 		s.direction = (const glm::vec3&)light.getDirection();
 		s.intensity = (const glm::vec3&)light.getIntensity();
 		s.range = light.getRange();
+		s.coneAngle = light.getConeAngleDegrees();
 		sLights.push_back(s);
 	}
-	m_lightUBO[Light::Spot]->BufferData(sLights);
+	m_lightVBO[Light::Spot]->BufferData(sLights);
 }
 
 #pragma endregion

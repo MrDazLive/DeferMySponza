@@ -32,7 +32,6 @@ flat in int fixed_material;
 layout(location = 0)out vec3 fragment_colour;
 layout(location = 1)out vec3 fragment_position;
 layout(location = 2)out vec3 fragment_normal;
-layout(location = 3)out vec3 fragment_coordinate;
 
 vec3 bumpNormal(vec2 coord) {
 	vec3 n = normalize(varying_normal);
@@ -49,14 +48,14 @@ vec3 bumpNormal(vec2 coord) {
 
 void main(void) {	
 	fragment_position = varying_position;
-	fragment_coordinate = vec3(varying_texture_coordinate, 0);
 	if(material[fixed_material].mainTexture < 6) {
 		vec3 mT = texture(mainTexture[material[fixed_material].mainTexture], varying_texture_coordinate).xyz;
 
 		fragment_normal = bumpNormal(varying_texture_coordinate);
-		fragment_colour = mT * material[fixed_material].diffuse * ambience;
+		fragment_colour = mT;
 	} else {
 		fragment_normal = varying_normal;
-		fragment_colour = material[fixed_material].diffuse * ambience;
+		fragment_colour = vec3(1);
 	}
+	fragment_colour *= material[fixed_material].diffuse * ambience;
 }

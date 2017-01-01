@@ -1,14 +1,11 @@
 #version 330
 
 struct Light {
+	vec3 position;
 	vec3 direction;
-	float pad1;
 	vec3 intensity;
-	float pad2;
-};
-
-layout (std140) uniform block_light {
-	Light light[2];
+	float range;
+	float coneAngle;
 };
 
 uniform vec3 eyePosition;
@@ -16,6 +13,8 @@ uniform vec3 eyePosition;
 uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
 uniform sampler2DRect normalMap;
+
+flat in Light fixed_light;
 
 layout(location = 0)out vec3 fragment_colour;
 
@@ -44,6 +43,5 @@ void main(void) {
    	WorldPosition = texture(positionMap, gl_FragCoord.xy).xyz;
    	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	
-	fragment_colour = getDirectional(light[0]);
-	fragment_colour += getDirectional(light[1]);
+	fragment_colour = getDirectional(fixed_light);
 }

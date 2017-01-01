@@ -68,9 +68,11 @@ private:
 			Normal = 2
 		};
 
-		FrameBufferObject *m_fbo{ nullptr };
+		FrameBufferObject *m_gFbo{ nullptr };
+		FrameBufferObject *m_lFbo{ nullptr };
 		Texture *m_dbuffer{ nullptr };
 		Texture *m_gBuffer[3]{ nullptr };
+		Texture *m_lBuffer{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
 		InstanceVOs *m_instancedVOs{ nullptr };
@@ -78,7 +80,7 @@ private:
 		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
 
 		VertexArrayObject *m_lightVAO[3]{ nullptr };
-		VertexBufferObject *m_lightVBO{ nullptr };
+		VertexBufferObject *m_quadVBO{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
 		VertexBufferObject *m_materialUBO{ nullptr };
@@ -91,7 +93,7 @@ private:
 			Point = 1,
 			Spot = 2
 		};
-		VertexBufferObject *m_lightUBO[3]{ nullptr };
+		VertexBufferObject *m_lightVBO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
