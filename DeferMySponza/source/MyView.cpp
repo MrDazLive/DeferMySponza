@@ -333,11 +333,11 @@ void MyView::PrepareVAOs() {
 	m_quadVBO->SetActive();
 	m_lightVAO[Light::Spot]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
 	m_lightVBO[Light::Spot]->SetActive();
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -667,15 +667,6 @@ void MyView::ForwardRender() {
 
 	DrawEnvironment();
 
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-
-	UpdateLights();
-
-	DrawLights();
-
-	glDisable(GL_BLEND);
 	m_queryForwardRender->End();
 }
 
@@ -708,8 +699,6 @@ void MyView::DeferredRender() {
 	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
 
 	FrameBufferObject::Reset();
-	FrameBufferObject::Reset(GL_DRAW_FRAMEBUFFER);
-	FrameBufferObject::Reset(GL_READ_FRAMEBUFFER);
 
 	m_queryDeferredRender->End();
 }
@@ -776,11 +765,10 @@ void MyView::DrawLights() {
 	m_lightVAO[Light::Directional]->SetActive();
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
-
-	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
 
@@ -788,21 +776,23 @@ void MyView::DrawLights() {
 	m_lightVAO[Light::Point]->SetActive();
 
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Point]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 20);
 
-	/*m_lightProgram[Light::Spot]->SetActive();
+	m_lightProgram[Light::Spot]->SetActive();
 	m_lightVAO[Light::Spot]->SetActive();
 
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
 
-	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);*/
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);
 	VertexArrayObject::Reset();
 }
 

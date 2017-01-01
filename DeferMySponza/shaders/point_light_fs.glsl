@@ -9,6 +9,7 @@ struct Light {
 };
 
 uniform vec3 eyePosition;
+uniform vec3 ambience;
 
 uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
@@ -39,7 +40,7 @@ vec3 getPoint(Light l) {
 	float dis = length(dir);
 	dir = normalize(dir);
 
-	float att = l.range * l.range / (dis * dis);
+	float att = l.range / (dis * dis);
 
 	return att * getInternal(dir, l.intensity);
 }
@@ -49,5 +50,5 @@ void main(void) {
    	WorldPosition = texture(positionMap, gl_FragCoord.xy).xyz;
    	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	
-	fragment_colour = getPoint(fixed_light);
+	fragment_colour = getPoint(fixed_light) / ambience;
 }

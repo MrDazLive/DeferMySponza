@@ -9,12 +9,11 @@ struct Light {
 };
 
 uniform vec3 eyePosition;
+uniform vec3 ambience;
 
 uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
 uniform sampler2DRect normalMap;
-
-uniform vec3 ambience;
 
 flat in Light fixed_light;
 
