@@ -75,7 +75,7 @@ void ShaderProgram::AddShader(const Shader *shader) {
 }
 
 void ShaderProgram::AddShader(const Shader *shader, const Shader* arr...) {
-	glAttachShader(this->getID(), shader->getID());
+	AddShader(shader);
 	AddShader(arr);
 }
 
@@ -85,8 +85,7 @@ void ShaderProgram::AddInAttribute(const std::string name) {
 }
 
 void ShaderProgram::AddInAttribute(const std::string name, const std::string arr...) {
-	glBindAttribLocation(this->getID(), this->getInAttributeCount(), name.c_str());
-	m_inAttributeCount++;
+	AddInAttribute(name);
 	AddInAttribute(arr);
 }
 
@@ -96,8 +95,7 @@ void ShaderProgram::AddOutAttribute(const std::string name) {
 }
 
 void ShaderProgram::AddOutAttribute(const std::string name, const std::string arr...) {
-	glBindAttribLocation(this->getID(), this->getOutAttributeCount(), name.c_str());
-	m_outAttributeCount++;
+	AddOutAttribute(name);
 	AddOutAttribute(arr);
 }
 
