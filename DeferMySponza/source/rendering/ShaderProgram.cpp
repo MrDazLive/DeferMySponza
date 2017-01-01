@@ -74,14 +74,31 @@ void ShaderProgram::AddShader(const Shader *shader) {
 	glAttachShader(this->getID(), shader->getID());
 }
 
+void ShaderProgram::AddShader(const Shader *shader, const Shader* arr...) {
+	glAttachShader(this->getID(), shader->getID());
+	AddShader(arr);
+}
+
 void ShaderProgram::AddInAttribute(const std::string name) {
 	glBindAttribLocation(this->getID(), this->getInAttributeCount(), name.c_str());
 	m_inAttributeCount++;
 }
 
+void ShaderProgram::AddInAttribute(const std::string name, const std::string arr...) {
+	glBindAttribLocation(this->getID(), this->getInAttributeCount(), name.c_str());
+	m_inAttributeCount++;
+	AddInAttribute(arr);
+}
+
 void ShaderProgram::AddOutAttribute(const std::string name) {
 	glBindAttribLocation(this->getID(), this->getOutAttributeCount(), name.c_str());
 	m_outAttributeCount++;
+}
+
+void ShaderProgram::AddOutAttribute(const std::string name, const std::string arr...) {
+	glBindAttribLocation(this->getID(), this->getOutAttributeCount(), name.c_str());
+	m_outAttributeCount++;
+	AddOutAttribute(arr);
 }
 
 void ShaderProgram::BindBlock(VertexBufferObject *vbo, const std::string name) {

@@ -423,19 +423,10 @@ void MyView::PreparePrograms() {
 	ShaderProgram *p = new ShaderProgram();
 	m_environmentProgram[Program::Instanced] = p;
 
-	p->AddShader(m_vsInstanced);
-	p->AddShader(m_fsEnvironment);
+	p->AddShader(m_vsInstanced, m_fsEnvironment);
 
-	p->AddInAttribute("vertex_position");
-	p->AddInAttribute("vertex_normal");
-	p->AddInAttribute("vertex_tangent");
-	p->AddInAttribute("vertex_texture_coordinate");
-
-	p->AddInAttribute("model");
-
-	p->AddOutAttribute("fragment_colour");
-	p->AddOutAttribute("fragment_position");
-	p->AddOutAttribute("fragment_normal");
+	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate", "model");
+	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal");
 
 	p->Link();
 
@@ -444,18 +435,10 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_environmentProgram[Program::NonInstanced] = p;
 
-	p->AddShader(m_vsNonInstanced);
-	p->AddShader(m_fsEnvironment);
+	p->AddShader(m_vsNonInstanced, m_fsEnvironment);
 
-	p->AddInAttribute("vertex_position");
-	p->AddInAttribute("vertex_normal");
-	p->AddInAttribute("vertex_tangent");
-	p->AddInAttribute("vertex_texture_coordinate");
-
-	p->AddOutAttribute("fragment_colour");
-	p->AddOutAttribute("fragment_position");
-	p->AddOutAttribute("fragment_normal");
-	p->AddOutAttribute("fragment_coordinate");
+	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate");
+	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal");
 
 	p->Link();
 
@@ -464,13 +447,9 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_lightProgram[Light::Directional] = p;
 
-	p->AddShader(m_vsLight);
-	p->AddShader(m_fsLight[Light::Directional]);
+	p->AddShader(m_vsLight, m_fsLight[Light::Directional]);
 
-	p->AddInAttribute("vertex_coord");
-	p->AddInAttribute("light.direction");
-	p->AddInAttribute("light.intensity");
-
+	p->AddInAttribute("vertex_coord", "light.direction", "light.intensity");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
@@ -478,14 +457,9 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_lightProgram[Light::Point] = p;
 
-	p->AddShader(m_vsLight);
-	p->AddShader(m_fsLight[Light::Point]);
+	p->AddShader(m_vsLight, m_fsLight[Light::Point]);
 
-	p->AddInAttribute("vertex_coord");
-	p->AddInAttribute("light.position");
-	p->AddInAttribute("light.intensity");
-	p->AddInAttribute("light.range");
-
+	p->AddInAttribute("vertex_coord", "light.position", "light.intensity", "light.range");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
@@ -493,16 +467,9 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_lightProgram[Light::Spot] = p;
 
-	p->AddShader(m_vsLight);
-	p->AddShader(m_fsLight[Light::Spot]);
+	p->AddShader(m_vsLight, m_fsLight[Light::Spot]);
 
-	p->AddInAttribute("vertex_coord");
-	p->AddInAttribute("light.position");
-	p->AddInAttribute("light.direction");
-	p->AddInAttribute("light.intensity");
-	p->AddInAttribute("light.range");
-	p->AddInAttribute("light.coneAngle");
-
+	p->AddInAttribute("vertex_coord", "light.position", "light.direction", "light.intensity", "light.range", "light.coneAngle");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
@@ -573,22 +540,16 @@ void MyView::PrepareGBs() {
 
 	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_gBuffer[GBuffer::Colour]->SetActive();
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Colour]);
 
 	m_gBuffer[GBuffer::Position] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
 	m_gBuffer[GBuffer::Position]->SetActive();
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Position]);
 
 	m_gBuffer[GBuffer::Normal] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
 	m_gBuffer[GBuffer::Normal]->SetActive();
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
 
@@ -596,8 +557,6 @@ void MyView::PrepareGBs() {
 
 	m_lBuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_lBuffer->SetActive();
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexParameterf(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	m_lBuffer->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_lFbo->AttachTexture(m_lBuffer);
 }
