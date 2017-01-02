@@ -737,6 +737,7 @@ void MyView::DrawLights() {
 	m_lightVAO[Light::Directional]->SetActive();
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
@@ -749,6 +750,7 @@ void MyView::DrawLights() {
 	m_lightVAO[Light::Point]->SetActive();
 
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
@@ -761,6 +763,7 @@ void MyView::DrawLights() {
 	m_lightVAO[Light::Spot]->SetActive();
 
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);

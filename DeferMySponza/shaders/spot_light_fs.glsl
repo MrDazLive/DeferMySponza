@@ -25,6 +25,7 @@ struct Light {
 };
 
 uniform vec3 eyePosition;
+uniform vec3 eyeDirection;
 uniform vec3 ambience;
 
 uniform sampler2DRect colourMap;
@@ -42,6 +43,15 @@ vec3 Normal;
 vec2 TextureCoordinate;
 int MaterialID;
 
+void getShine(inout float specular) { 
+	vec3 H = normalize(fixed_light.direction + eyeDirection);
+	float VH = max(dot(eyeDirection, H), 0);
+
+	float shine = pow(1 - VH, 5);
+	shine *= (1 - material[MaterialID].shine);
+	specular *= shine + material[MaterialID].shine;
+}
+
 void getMetallic(inout float diffuse, inout float specular) {
 	float met = material[MaterialID].metallic;
 	specular = mix(specular, 1, met);
@@ -53,9 +63,10 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 	if(diffuse > 0) {
 		vec3 dir = normalize(eyePosition - WorldPosition);
 		vec3 ref = normalize(reflect(lightDirection, Normal));
-
-		float specular = clamp(dot(dir, ref), 0, 1);
 		
+		float specular = max(dot(dir, ref), 0);
+		
+		getShine(specular);
 		getMetallic(diffuse, specular);
 
 		return vec3(diffuse + specular) * Colour * lightIntensity;
