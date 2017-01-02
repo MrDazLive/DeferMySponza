@@ -29,13 +29,17 @@ GLint TimeQuery::getMaxResult() const {
 }
 
 GLint TimeQuery::getMeanResult() const {
-	return m_mean;
+	GLint mean = 0;
+	for (unsigned int i = 0; i < 16; i++) {
+		mean += m_list[i];
+	}
+	return mean / 16;
 }
 
 std::string TimeQuery::toString() const {
 	std::ostringstream oss;
 	oss << "Minimum: " << m_min / 1000000.0f << "ms || " <<
-		"Mean: " << m_mean / 1000000.0f << "ms || " <<
+		"Mean: " << getMeanResult() / 1000000.0f << "ms || " <<
 		"Maximum: " << m_max / 1000000.0f << "ms";
 	return oss.str();
 }
@@ -70,18 +74,19 @@ void TimeQuery::End() {
 void TimeQuery::Reset() {
 	m_min = INT_MAX;
 	m_max = INT_MIN;
-	m_mean = 0;
-	m_count = 0;
+	m_index = 0;
+	for (GLint64 &val : m_list) {
+		val = 0;
+	}
 }
 
 #pragma endregion
 #pragma region Additional Methods
 
 void TimeQuery::RegisterNewValue() {
-	GLint oldT = m_mean * m_count;
-	GLint newT = oldT + m_last;
-	m_count++;
-	m_mean = newT / m_count;
+	m_list[m_index] = m_last;
+	m_index++;
+	m_index %= 16;
 
 	if (m_last < m_min) {
 		m_min = m_last;

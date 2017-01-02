@@ -5,6 +5,7 @@
 #include <functional>
 
 class Shader;
+class Texture;
 class VertexBufferObject;
 
 class ShaderProgram {
@@ -29,9 +30,13 @@ public:
 	void SetActive();
 	void LogInfo();
 	void AddShader(const Shader *shader);
+	void AddShader(const Shader *shader, const Shader *arr...);
 	void AddInAttribute(const std::string name);
+	void AddInAttribute(const std::string name, const std::string arr...);
 	void AddOutAttribute(const std::string name);
+	void AddOutAttribute(const std::string name, const std::string arr...);
 	void BindBlock(VertexBufferObject *vbo, const std::string name);
+	void BindUniformTexture(const Texture *texture, const std::string name, const GLuint offset = 0);
 	template <typename T> void BindUniformV3(const T& value, const std::string name);
 	template <typename T> void BindUniformM4(const T& value, const std::string name);
 #pragma endregion

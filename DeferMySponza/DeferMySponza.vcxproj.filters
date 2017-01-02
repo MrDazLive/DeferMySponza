@@ -61,6 +61,12 @@
     <ClCompile Include="source\rendering\Texture.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="source\rendering\FrameBufferObject.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rendering\PostProcessing.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\MyView.hpp">
@@ -90,15 +96,48 @@
     <ClInclude Include="source\rendering\Texture.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="source\rendering\FrameBufferObject.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\enums\Mode.h">
+      <Filter>Header Files\Rendering\Enums</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\PostProcessing.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="source\rendering\enums\PostProcess.h">
+      <Filter>Header Files\Rendering\Enums</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\instanced_vs.glsl">
+    <None Include="shaders\post_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\mesh_fs.glsl">
+    <None Include="shaders\anti_aliasing_fs.glsl">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\nonInstanced_vs.glsl">
+    <None Include="shaders\cel_shading_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\environment_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\non_instanced_environment_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\instanced_environment_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\directional_light_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\point_light_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\spot_light_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\light_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>
