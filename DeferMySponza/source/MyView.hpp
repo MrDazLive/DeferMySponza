@@ -65,13 +65,14 @@ private:
 		enum GBuffer {
 			Colour = 0,
 			Position = 1,
-			Normal = 2
+			Normal = 2,
+			Material = 3
 		};
 
 		FrameBufferObject *m_gFbo{ nullptr };
 		FrameBufferObject *m_lFbo{ nullptr };
 		Texture *m_dbuffer{ nullptr };
-		Texture *m_gBuffer[3]{ nullptr };
+		Texture *m_gBuffer[4]{ nullptr };
 		Texture *m_lBuffer{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects

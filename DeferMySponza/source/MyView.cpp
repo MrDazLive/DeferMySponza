@@ -148,6 +148,7 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_lBuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_antiAliasing->setTextureSize(width, height);
 }
@@ -163,6 +164,7 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_gBuffer[GBuffer::Colour];
 	delete m_gBuffer[GBuffer::Position];
 	delete m_gBuffer[GBuffer::Normal];
+	delete m_gBuffer[GBuffer::Material];
 
 	delete m_instancedVOs;
 	delete m_nonStaticVOs;
@@ -426,7 +428,7 @@ void MyView::PreparePrograms() {
 	p->AddShader(m_vsInstanced, m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate", "model");
-	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal");
+	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
 
 	p->Link();
 
@@ -438,7 +440,7 @@ void MyView::PreparePrograms() {
 	p->AddShader(m_vsNonInstanced, m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate");
-	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal");
+	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
 
 	p->Link();
 
@@ -454,6 +456,8 @@ void MyView::PreparePrograms() {
 
 	p->Link();
 
+	p->BindBlock(m_materialUBO, "block_material");
+
 	p = new ShaderProgram();
 	m_lightProgram[Light::Point] = p;
 
@@ -464,6 +468,8 @@ void MyView::PreparePrograms() {
 
 	p->Link();
 
+	p->BindBlock(m_materialUBO, "block_material");
+
 	p = new ShaderProgram();
 	m_lightProgram[Light::Spot] = p;
 
@@ -473,6 +479,8 @@ void MyView::PreparePrograms() {
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
+
+	p->BindBlock(m_materialUBO, "block_material");
 }
 
 void MyView::PrepareMeshData() {
@@ -552,6 +560,11 @@ void MyView::PrepareGBs() {
 	m_gBuffer[GBuffer::Normal]->SetActive();
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
+
+	m_gBuffer[GBuffer::Material] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
+	m_gBuffer[GBuffer::Material]->SetActive();
+	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material]);
 
 	m_lFbo = new FrameBufferObject();
 
@@ -728,6 +741,7 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
 
@@ -739,6 +753,7 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 20);
 
@@ -750,6 +765,7 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);
 	VertexArrayObject::Reset();

@@ -158,6 +158,16 @@ bool Context::readFile(std::string filepath)
         new_material.setShininess(shininess[j]);
 		new_material.setMainTextureId(mainTexture[j]);
 		new_material.setNormalTextureId(normalTexture[j]);
+		switch (j) {
+			case 3:
+				new_material.setMetallic(1.0f);
+				break;
+			case 4:
+			case 5:
+			case 6:
+				new_material.setMetallic(0.7f);
+				break;
+		}
         materials_.push_back(new_material);
         for (int i = 0; i<numberOfShapes[j]; ++i) {
             int index = shapes[j][i];
