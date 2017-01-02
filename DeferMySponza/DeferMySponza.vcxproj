@@ -319,6 +319,8 @@
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\MyController.cpp" />
     <ClCompile Include="source\MyView.cpp" />
+    <ClCompile Include="source\rendering\FrameBufferObject.cpp" />
+    <ClCompile Include="source\rendering\PostProcessing.cpp" />
     <ClCompile Include="source\rendering\Shader.cpp" />
     <ClCompile Include="source\rendering\ShaderProgram.cpp" />
     <ClCompile Include="source\rendering\Texture.cpp" />
@@ -330,6 +332,10 @@
     <ClInclude Include="source\MyController.hpp" />
     <ClInclude Include="source\MyView.hpp" />
     <ClInclude Include="source\rendering\enums\Buffer.h" />
+    <ClInclude Include="source\rendering\enums\Mode.h" />
+    <ClInclude Include="source\rendering\enums\PostProcess.h" />
+    <ClInclude Include="source\rendering\FrameBufferObject.h" />
+    <ClInclude Include="source\rendering\PostProcessing.h" />
     <ClInclude Include="source\rendering\Shader.h" />
     <ClInclude Include="source\rendering\ShaderProgram.h" />
     <ClInclude Include="source\rendering\Texture.h" />
@@ -338,9 +344,16 @@
     <ClInclude Include="source\utilities\TimeQuery.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\instanced_vs.glsl" />
-    <None Include="shaders\mesh_fs.glsl" />
-    <None Include="shaders\nonInstanced_vs.glsl" />
+    <None Include="shaders\cel_shading_fs.glsl" />
+    <None Include="shaders\instanced_environment_vs.glsl" />
+    <None Include="shaders\environment_fs.glsl" />
+    <None Include="shaders\directional_light_fs.glsl" />
+    <None Include="shaders\light_vs.glsl" />
+    <None Include="shaders\non_instanced_environment_vs.glsl" />
+    <None Include="shaders\anti_aliasing_fs.glsl" />
+    <None Include="shaders\point_light_fs.glsl" />
+    <None Include="shaders\post_vs.glsl" />
+    <None Include="shaders\spot_light_fs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

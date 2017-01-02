@@ -149,7 +149,7 @@ bool Context::readFile(std::string filepath)
         Vector3(0.4f, 0.4f, 0.8f)
     };
     float shininess[7] = { 0.f, 64.f, 128.f, 64.f, 0.f, 0.f };
-	int mainTexture[7] = { 1, 2, 1, 128, 128, 128, 128 };
+	int mainTexture[7] = { 0, 2, 1, 128, 128, 128, 128 };
 	int normalTexture[7] = { 0, 2, 1, 128, 128, 128, 128 };
     for (int j = 0; j<7; ++j) {
         Material new_material(200 + j);
@@ -227,7 +227,7 @@ void Context::update()
         for (int i = 0; i < num_of_point_lights; ++i)
         {
             auto light = PointLight(LightId(base_id + i));
-            light.setRange(20.f);
+            light.setRange(45.f);
             light.setIntensity(Vector3(rand(r), rand(r), rand(r)));
             point_lights_.push_back(light);
         }

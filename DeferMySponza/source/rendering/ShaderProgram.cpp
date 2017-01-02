@@ -2,6 +2,7 @@
 
 #include <tgl\tgl.h>
 #include "Shader.h"
+#include "Texture.h"
 #include "VertexBufferObject.h"
 
 #pragma region Constructors/Destructors
@@ -73,9 +74,19 @@ void ShaderProgram::AddShader(const Shader *shader) {
 	glAttachShader(this->getID(), shader->getID());
 }
 
+void ShaderProgram::AddShader(const Shader *shader, const Shader* arr...) {
+	AddShader(shader);
+	AddShader(arr);
+}
+
 void ShaderProgram::AddInAttribute(const std::string name) {
 	glBindAttribLocation(this->getID(), this->getInAttributeCount(), name.c_str());
 	m_inAttributeCount++;
+}
+
+void ShaderProgram::AddInAttribute(const std::string name, const std::string arr...) {
+	AddInAttribute(name);
+	AddInAttribute(arr);
 }
 
 void ShaderProgram::AddOutAttribute(const std::string name) {
@@ -83,11 +94,23 @@ void ShaderProgram::AddOutAttribute(const std::string name) {
 	m_outAttributeCount++;
 }
 
+void ShaderProgram::AddOutAttribute(const std::string name, const std::string arr...) {
+	AddOutAttribute(name);
+	AddOutAttribute(arr);
+}
+
 void ShaderProgram::BindBlock(VertexBufferObject *vbo, const std::string name) {
 	vbo->SetActive();
 	GLuint index = glGetUniformBlockIndex(m_id, name.c_str());
 	glUniformBlockBinding(m_id, index, 0);
 	VertexBufferObject::Reset(vbo->getTarget());
+}
+
+void ShaderProgram::BindUniformTexture(const Texture *texture, const std::string name, const GLuint offset) {
+	glActiveTexture(GL_TEXTURE0 + offset);
+	glBindTexture(texture->getTarget(), texture->getID());
+	GLuint id = glGetUniformLocation(this->getID(), name.c_str());
+	glUniform1i(id, offset);
 }
 
 #pragma endregion
