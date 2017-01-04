@@ -18,10 +18,8 @@ layout (std140) uniform block_material {
 
 struct Light {
 	vec3 position;
-	vec3 direction;
 	vec3 intensity;
 	float range;
-	float coneAngle;
 };
 
 uniform vec3 eyePosition;
@@ -42,8 +40,8 @@ vec3 Normal;
 vec2 TextureCoordinate;
 int MaterialID;
 
-void getShine(inout float specular) { 
-	vec3 H = normalize(fixed_light.direction + eyeDirection);
+void getShine(vec3 lightDirection, inout float specular) {
+	vec3 H = normalize(lightDirection + eyeDirection);
 	float VH = max(dot(eyeDirection, H), 0);
 
 	float shine = pow(1 - VH, 5);
@@ -65,7 +63,7 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 		
 		float specular = max(dot(dir, ref), 0);
 		
-		getShine(specular);
+		getShine(lightDirection, specular);
 		getMetallic(diffuse, specular);
 
 		return vec3(diffuse + specular) * Colour * lightIntensity;

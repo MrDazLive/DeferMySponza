@@ -1,11 +1,8 @@
 #version 330
 
 struct Light {
-	vec3 position;
 	vec3 direction;
 	vec3 intensity;
-	float range;
-	float coneAngle;
 };
 
 layout(location = 0) in vec2 vertex_coord;

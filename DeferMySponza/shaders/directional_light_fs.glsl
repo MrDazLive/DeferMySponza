@@ -17,11 +17,8 @@ layout (std140) uniform block_material {
 };
 
 struct Light {
-	vec3 position;
 	vec3 direction;
 	vec3 intensity;
-	float range;
-	float coneAngle;
 };
 
 uniform vec3 eyePosition;

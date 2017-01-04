@@ -83,7 +83,7 @@ vec3 getSpot(Light l) {
 
 	if(fac > ang) {
 		float dAtt = l.range * l.range / (dis * dis * dis);
-		float cAtt = 1 - ((1 - fac) / (1 - ang));
+		float cAtt = 1;// 1 - ((1 - fac) / (1 - ang));
 
 		return dAtt * cAtt * getInternal(dir, l.intensity);
 	}
