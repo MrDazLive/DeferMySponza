@@ -861,7 +861,7 @@ void MyView::UpdateLights() {
 		s.direction = (const glm::vec3&)light.getDirection();
 		s.intensity = (const glm::vec3&)light.getIntensity();
 		s.range = light.getRange();
-		s.coneAngle = light.getConeAngleDegrees();
+		s.coneAngle = glm::radians(light.getConeAngleDegrees());
 		sLights.push_back(s);
 	}
 	m_lightVO[Light::Spot]->instances.BufferData(sLights);

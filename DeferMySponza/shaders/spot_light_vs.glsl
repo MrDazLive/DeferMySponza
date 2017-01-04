@@ -16,7 +16,7 @@ uniform mat4 combined_transform;
 flat out Light fixed_light;
 
 void main(void) {
-	float rad = light.coneAngle;
+	float rad = tan(light.coneAngle / 2) * light.range;
 	float ran = light.range;
 	vec3 dir = light.direction;
 	vec3 pos = light.position;
