@@ -26,7 +26,6 @@ struct Light {
 
 uniform vec3 eyePosition;
 uniform vec3 eyeDirection;
-uniform vec3 ambience;
 
 uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
@@ -85,5 +84,5 @@ void main(void) {
 	TextureCoordinate = texture(materialMap, gl_FragCoord.xy).xy;
 	MaterialID = int(texture(materialMap, gl_FragCoord.xy).z);
 	
-	fragment_colour = getDirectional(fixed_light) / ambience;
+	fragment_colour = getDirectional(fixed_light);
 }

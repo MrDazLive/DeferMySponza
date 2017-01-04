@@ -144,7 +144,7 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	const float aspect_ratio = (float)width / (float)height;
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
 
-	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, width, height, GL_DEPTH_COMPONENT, GL_FLOAT);
+	m_dbuffer->Buffer(GL_DEPTH24_STENCIL8, width, height, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
@@ -540,10 +540,11 @@ void MyView::PrepareTextures() {
 }
 
 void MyView::PrepareGBs() {
+	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_STENCIL_ATTACHMENT);
+	m_dbuffer->Buffer(GL_DEPTH24_STENCIL8, 0, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
+
 	m_gFbo = new FrameBufferObject();
 
-	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
-	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, 0, 0, GL_DEPTH_COMPONENT, GL_FLOAT);
 	m_gFbo->AttachTexture(m_dbuffer, false);
 
 	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
@@ -567,6 +568,8 @@ void MyView::PrepareGBs() {
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material]);
 
 	m_lFbo = new FrameBufferObject();
+
+	m_lFbo->AttachTexture(m_dbuffer, false);
 
 	m_lBuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_lBuffer->SetActive();
@@ -648,8 +651,12 @@ void MyView::DeferredRender() {
 	m_gFbo->SetActive();
 
 	glDepthMask(GL_TRUE);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	glStencilFunc(GL_ALWAYS, 1, ~0);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	DrawEnvironment();
 
@@ -662,11 +669,14 @@ void MyView::DeferredRender() {
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
+	glStencilFunc(GL_LEQUAL, 1, ~0);
+
 	UpdateLights();
 
 	DrawLights();
 
 	glDisable(GL_BLEND);
+	glDisable(GL_STENCIL_TEST);
 
 	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
 
@@ -738,7 +748,6 @@ void MyView::DrawLights() {
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
@@ -751,7 +760,6 @@ void MyView::DrawLights() {
 
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Point]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
@@ -764,7 +772,6 @@ void MyView::DrawLights() {
 
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);

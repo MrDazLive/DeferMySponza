@@ -26,7 +26,6 @@ struct Light {
 
 uniform vec3 eyePosition;
 uniform vec3 eyeDirection;
-uniform vec3 ambience;
 
 uniform sampler2DRect colourMap;
 uniform sampler2DRect positionMap;
@@ -83,7 +82,7 @@ vec3 getSpot(Light l) {
 	float ang = cos(l.coneAngle / 2);
 
 	if(fac > ang) {
-		float dAtt = l.range / (dis * dis);
+		float dAtt = l.range * l.range / (dis * dis * dis);
 		float cAtt = 1 - ((1 - fac) / (1 - ang));
 
 		return dAtt * cAtt * getInternal(dir, l.intensity);
@@ -98,5 +97,5 @@ void main(void) {
 	TextureCoordinate = texture(materialMap, gl_FragCoord.xy).xy;
 	MaterialID = int(texture(materialMap, gl_FragCoord.xy).z);
 	
-	fragment_colour = getSpot(fixed_light) / ambience;
+	fragment_colour = getSpot(fixed_light);
 }
