@@ -787,6 +787,9 @@ void MyView::DrawLights() {
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
 
+	glCullFace(GL_FRONT);
+	glDepthFunc(GL_GEQUAL);
+
 	m_lightProgram[Light::Point]->SetActive();
 	m_lightVO[Light::Point]->vao.SetActive();
 
@@ -812,6 +815,10 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
 	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, 5);
+
+	glCullFace(GL_BACK);
+	glDepthFunc(GL_LEQUAL);
+
 	VertexArrayObject::Reset();
 }
 
