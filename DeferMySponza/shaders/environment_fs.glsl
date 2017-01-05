@@ -3,13 +3,12 @@
 struct Material {
 	vec3 diffuse;
 	float shine;
-
 	vec3 specular;
-	int mainTexture;
+	float metalic;
 
-	int excess0;
-	int excess1;
+	int mainTexture;
 	int normalTexture;
+	int excess1;
 	int excess2;
 };
 
@@ -32,6 +31,7 @@ flat in int fixed_material;
 layout(location = 0)out vec3 fragment_colour;
 layout(location = 1)out vec3 fragment_position;
 layout(location = 2)out vec3 fragment_normal;
+layout(location = 3)out vec3 fragment_material;
 
 vec3 bumpNormal(vec2 coord) {
 	vec3 n = normalize(varying_normal);
@@ -48,6 +48,7 @@ vec3 bumpNormal(vec2 coord) {
 
 void main(void) {	
 	fragment_position = varying_position;
+	fragment_material = vec3(varying_texture_coordinate, fixed_material);
 	if(material[fixed_material].mainTexture < 6) {
 		vec3 mT = texture(mainTexture[material[fixed_material].mainTexture], varying_texture_coordinate).xyz;
 

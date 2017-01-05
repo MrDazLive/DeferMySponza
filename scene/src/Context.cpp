@@ -148,7 +148,8 @@ bool Context::readFile(std::string filepath)
         Vector3(0.4f, 0.8f, 0.4f),
         Vector3(0.4f, 0.4f, 0.8f)
     };
-    float shininess[7] = { 0.f, 64.f, 128.f, 64.f, 0.f, 0.f };
+    float shininess[7] = { 0.0f, 0.0f, 0.5f, 1.0f, 0.5f, 0.0f, 0.0f };
+	float metallic[7] = { 0.0f, 0.0f, 0.0f, 1.0f, 0.7f, 0.3f, 0.0f };
 	int mainTexture[7] = { 0, 2, 1, 128, 128, 128, 128 };
 	int normalTexture[7] = { 0, 2, 1, 128, 128, 128, 128 };
     for (int j = 0; j<7; ++j) {
@@ -156,6 +157,7 @@ bool Context::readFile(std::string filepath)
         new_material.setDiffuseColour(diffuse_colours[j]);
         new_material.setSpecularColour(specular_colours[j]);
         new_material.setShininess(shininess[j]);
+		new_material.setMetallic(metallic[j]);
 		new_material.setMainTextureId(mainTexture[j]);
 		new_material.setNormalTextureId(normalTexture[j]);
         materials_.push_back(new_material);

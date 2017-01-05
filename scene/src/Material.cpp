@@ -44,6 +44,16 @@ void Material::setShininess(float s)
 	shininess = s;
 }
 
+float Material::getMetallic() const
+{
+	return metallic;
+}
+
+void Material::setMetallic(float m)
+{
+	metallic = m;
+}
+
 int Material::getMainTextureId() const {
 	return main_texture_id;
 }

@@ -34,6 +34,14 @@ struct MyView::Mesh {
 	GLuint instanceIndex;
 };
 
+struct MyView::Shape {
+	VertexArrayObject vao = VertexArrayObject();
+	VertexBufferObject elements = VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	VertexBufferObject vertices = VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	VertexBufferObject instances = VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	GLuint elementCount;
+};
+
 struct MyView::Vertex {
 	glm::vec3 positiion;
 	glm::vec3 normal;
@@ -144,10 +152,11 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	const float aspect_ratio = (float)width / (float)height;
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
 
-	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, width, height, GL_DEPTH_COMPONENT, GL_FLOAT);
+	m_dbuffer->Buffer(GL_DEPTH24_STENCIL8, width, height, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_lBuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
 	m_antiAliasing->setTextureSize(width, height);
 }
@@ -163,18 +172,15 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_gBuffer[GBuffer::Colour];
 	delete m_gBuffer[GBuffer::Position];
 	delete m_gBuffer[GBuffer::Normal];
+	delete m_gBuffer[GBuffer::Material];
 
 	delete m_instancedVOs;
 	delete m_nonStaticVOs;
 	delete m_nonInstancedVOs;
 
-	delete m_lightVAO[Light::Directional];
-	delete m_lightVAO[Light::Point];
-	delete m_lightVAO[Light::Spot];
-	delete m_lightVBO[Light::Directional];
-	delete m_lightVBO[Light::Point];
-	delete m_lightVBO[Light::Spot];
-	delete m_quadVBO;
+	delete m_lightVO[Light::Directional];
+	delete m_lightVO[Light::Point];
+	delete m_lightVO[Light::Spot];
 
 	delete m_materialUBO;
 	for (Texture *ptr : m_mainTexture) {
@@ -185,7 +191,9 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_lightProgram[Light::Point];
 	delete m_lightProgram[Light::Spot];
 
-	delete m_vsLight;
+	delete m_vsLight[Light::Directional];
+	delete m_vsLight[Light::Point];
+	delete m_vsLight[Light::Spot];
 	delete m_fsLight[Light::Directional];
 	delete m_fsLight[Light::Point];
 	delete m_fsLight[Light::Spot];
@@ -261,6 +269,10 @@ void MyView::PrepareVOs() {
 	m_nonStaticVOs = new NonStaticVOs();
 	m_nonInstancedVOs = new NonInstanceVOs();
 
+	m_lightVO[Light::Directional] = new Shape();
+	m_lightVO[Light::Point] = new Shape();
+	m_lightVO[Light::Spot] = new Shape();
+
 	PrepareGBs();
 	PrepareMeshData();
 
@@ -311,33 +323,32 @@ void MyView::PrepareVAOs() {
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 
-	m_lightVAO[Light::Directional] = new VertexArrayObject();
-	m_lightVAO[Light::Directional]->SetActive();
-	m_quadVBO->SetActive();
-	m_lightVAO[Light::Directional]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
-	m_lightVBO[Light::Directional]->SetActive();
-	m_lightVAO[Light::Directional]->AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVAO[Light::Directional]->AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVO[Light::Directional]->vao.SetActive();
+	m_lightVO[Light::Directional]->vertices.SetActive();
+	m_lightVO[Light::Directional]->vao.AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Directional]->instances.SetActive();
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 
-	m_lightVAO[Light::Point] = new VertexArrayObject();
-	m_lightVAO[Light::Point]->SetActive();
-	m_quadVBO->SetActive();
-	m_lightVAO[Light::Point]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
-	m_lightVBO[Light::Point]->SetActive();
-	m_lightVAO[Light::Point]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVAO[Light::Point]->AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_lightVAO[Light::Point]->AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVO[Light::Point]->vao.SetActive();
+	m_lightVO[Light::Point]->elements.SetActive();
+	m_lightVO[Light::Point]->vertices.SetActive();
+	m_lightVO[Light::Point]->vao.AddAttribute<glm::vec3>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Point]->instances.SetActive();
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 
-	m_lightVAO[Light::Spot] = new VertexArrayObject();
-	m_lightVAO[Light::Spot]->SetActive();
-	m_quadVBO->SetActive();
-	m_lightVAO[Light::Spot]->AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
-	m_lightVBO[Light::Spot]->SetActive();
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
-	m_lightVAO[Light::Spot]->AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
+	m_lightVO[Light::Spot]->vao.SetActive();
+	m_lightVO[Light::Spot]->elements.SetActive();
+	m_lightVO[Light::Spot]->vertices.SetActive();
+	m_lightVO[Light::Spot]->vao.AddAttribute<glm::vec3>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Spot]->instances.SetActive();
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -373,15 +384,30 @@ void MyView::PrepareVBOs() {
 	elements.clear();
 	instances.clear();
 
-	m_quadVBO = new VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	std::vector<glm::vec2> v = { glm::vec2(-1, -1),
 		glm::vec2(1, -1),
 		glm::vec2(1, 1),
 		glm::vec2(-1, 1) };
-	m_quadVBO->BufferData(v);
-	m_lightVBO[Light::Directional] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightVBO[Light::Point] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
-	m_lightVBO[Light::Spot] = new VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	m_lightVO[Light::Directional]->vertices.BufferData(v);
+
+	tsl::IndexedMeshPtr sphere = tsl::createSpherePtr(1.0f, 12);
+	sphere = tsl::cloneIndexedMeshAsTriangleListPtr(sphere.get());
+
+	m_lightVO[Light::Point]->vertices.BufferData(sphere->positionArray()[0], sphere->vertexCount());
+	m_lightVO[Light::Point]->elements.BufferData(sphere->indexArray()[0], sphere->indexCount());
+	m_lightVO[Light::Point]->elementCount = sphere->indexCount();
+
+	tsl::IndexedMeshPtr cone = tsl::createConePtr(1.0f, 1.0f, 6);
+	cone = tsl::cloneIndexedMeshAsTriangleListPtr(cone.get());
+
+	std::vector<glm::vec3> positions;
+	for (int i = 0; i < cone->vertexCount(); i++) {
+		positions.push_back((const glm::vec3&)cone->positionArray()[i] - glm::vec3(0, 0, 1));
+	}
+
+	m_lightVO[Light::Spot]->vertices.BufferData(positions);
+	m_lightVO[Light::Spot]->elements.BufferData(cone->indexArray()[0], cone->indexCount());
+	m_lightVO[Light::Spot]->elementCount = cone->indexCount();
 }
 
 void MyView::PrepareUBOs() {
@@ -406,8 +432,14 @@ void MyView::PrepareShaders() {
 	m_fsEnvironment = new Shader(GL_FRAGMENT_SHADER);
 	m_fsEnvironment->LoadFile("resource:///environment_fs.glsl");
 
-	m_vsLight = new Shader(GL_VERTEX_SHADER);
-	m_vsLight->LoadFile("resource:///light_vs.glsl");
+	m_vsLight[Light::Directional] = new Shader(GL_VERTEX_SHADER);
+	m_vsLight[Light::Directional]->LoadFile("resource:///directional_light_vs.glsl");
+
+	m_vsLight[Light::Point] = new Shader(GL_VERTEX_SHADER);
+	m_vsLight[Light::Point]->LoadFile("resource:///point_light_vs.glsl");
+
+	m_vsLight[Light::Spot] = new Shader(GL_VERTEX_SHADER);
+	m_vsLight[Light::Spot]->LoadFile("resource:///spot_light_vs.glsl");
 
 	m_fsLight[Light::Directional] = new Shader(GL_FRAGMENT_SHADER);
 	m_fsLight[Light::Directional]->LoadFile("resource:///directional_light_fs.glsl");
@@ -426,7 +458,7 @@ void MyView::PreparePrograms() {
 	p->AddShader(m_vsInstanced, m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate", "model");
-	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal");
+	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
 
 	p->Link();
 
@@ -438,7 +470,7 @@ void MyView::PreparePrograms() {
 	p->AddShader(m_vsNonInstanced, m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate");
-	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal");
+	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
 
 	p->Link();
 
@@ -447,32 +479,38 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_lightProgram[Light::Directional] = p;
 
-	p->AddShader(m_vsLight, m_fsLight[Light::Directional]);
+	p->AddShader(m_vsLight[Light::Directional], m_fsLight[Light::Directional]);
 
 	p->AddInAttribute("vertex_coord", "light.direction", "light.intensity");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
 
+	p->BindBlock(m_materialUBO, "block_material");
+
 	p = new ShaderProgram();
 	m_lightProgram[Light::Point] = p;
 
-	p->AddShader(m_vsLight, m_fsLight[Light::Point]);
+	p->AddShader(m_vsLight[Light::Point], m_fsLight[Light::Point]);
 
 	p->AddInAttribute("vertex_coord", "light.position", "light.intensity", "light.range");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
 
+	p->BindBlock(m_materialUBO, "block_material");
+
 	p = new ShaderProgram();
 	m_lightProgram[Light::Spot] = p;
 
-	p->AddShader(m_vsLight, m_fsLight[Light::Spot]);
+	p->AddShader(m_vsLight[Light::Spot], m_fsLight[Light::Spot]);
 
 	p->AddInAttribute("vertex_coord", "light.position", "light.direction", "light.intensity", "light.range", "light.coneAngle");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
+
+	p->BindBlock(m_materialUBO, "block_material");
 }
 
 void MyView::PrepareMeshData() {
@@ -532,10 +570,11 @@ void MyView::PrepareTextures() {
 }
 
 void MyView::PrepareGBs() {
+	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_STENCIL_ATTACHMENT);
+	m_dbuffer->Buffer(GL_DEPTH24_STENCIL8, 0, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
+
 	m_gFbo = new FrameBufferObject();
 
-	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
-	m_dbuffer->Buffer(GL_DEPTH_COMPONENT32F, 0, 0, GL_DEPTH_COMPONENT, GL_FLOAT);
 	m_gFbo->AttachTexture(m_dbuffer, false);
 
 	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
@@ -553,7 +592,14 @@ void MyView::PrepareGBs() {
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
 
+	m_gBuffer[GBuffer::Material] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
+	m_gBuffer[GBuffer::Material]->SetActive();
+	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material]);
+
 	m_lFbo = new FrameBufferObject();
+
+	m_lFbo->AttachTexture(m_dbuffer, false);
 
 	m_lBuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_lBuffer->SetActive();
@@ -635,8 +681,12 @@ void MyView::DeferredRender() {
 	m_gFbo->SetActive();
 
 	glDepthMask(GL_TRUE);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	glStencilFunc(GL_ALWAYS, 1, ~0);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	DrawEnvironment();
 
@@ -649,11 +699,14 @@ void MyView::DeferredRender() {
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
+	glStencilFunc(GL_LEQUAL, 1, ~0);
+
 	UpdateLights();
 
 	DrawLights();
 
 	glDisable(GL_BLEND);
+	glDisable(GL_STENCIL_TEST);
 
 	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
 
@@ -720,38 +773,52 @@ void MyView::DrawEnvironment() {
 }
 
 void MyView::DrawLights() {
+	glm::mat4 combined_transform = projection_transform * view_transform;
+
 	m_lightProgram[Light::Directional]->SetActive();
-	m_lightVAO[Light::Directional]->SetActive();
+	m_lightVO[Light::Directional]->vao.SetActive();
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
-	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
+	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
 
-	m_lightProgram[Light::Point]->SetActive();
-	m_lightVAO[Light::Point]->SetActive();
+	glCullFace(GL_FRONT);
+	glDepthFunc(GL_GEQUAL);
 
+	m_lightProgram[Light::Point]->SetActive();
+	m_lightVO[Light::Point]->vao.SetActive();
+
+	m_lightProgram[Light::Point]->BindUniformM4(combined_transform, "combined_transform");
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
-	m_lightProgram[Light::Point]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
+	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
-	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 20);
+	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Point]->elementCount, GL_UNSIGNED_INT, 0, 20);
 
 	m_lightProgram[Light::Spot]->SetActive();
-	m_lightVAO[Light::Spot]->SetActive();
+	m_lightVO[Light::Spot]->vao.SetActive();
 
+	m_lightProgram[Light::Spot]->BindUniformM4(combined_transform, "combined_transform");
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
-	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
+	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
 	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
+	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
 
-	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 5);
+	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, 5);
+
+	glCullFace(GL_BACK);
+	glDepthFunc(GL_LEQUAL);
+
 	VertexArrayObject::Reset();
 }
 
@@ -787,7 +854,7 @@ void MyView::UpdateLights() {
 		d.intensity = (const glm::vec3&)light.getIntensity();
 		dLights.push_back(d);
 	}
-	m_lightVBO[Light::Directional]->BufferData(dLights);
+	m_lightVO[Light::Directional]->instances.BufferData(dLights);
 
 	std::vector<PointLight> pLights;
 	for (const auto &light : scene_->getAllPointLights()) {
@@ -797,20 +864,19 @@ void MyView::UpdateLights() {
 		p.range = light.getRange();
 		pLights.push_back(p);
 	}
-	m_lightVBO[Light::Point]->BufferData(pLights);
+	m_lightVO[Light::Point]->instances.BufferData(pLights);
 
 	std::vector<SpotLight> sLights;
-	int i = 0;
 	for (const auto &light : scene_->getAllSpotLights()) {
 		SpotLight s;
 		s.position = (const glm::vec3&)light.getPosition();
 		s.direction = (const glm::vec3&)light.getDirection();
 		s.intensity = (const glm::vec3&)light.getIntensity();
 		s.range = light.getRange();
-		s.coneAngle = light.getConeAngleDegrees();
+		s.coneAngle = glm::radians(light.getConeAngleDegrees());
 		sLights.push_back(s);
 	}
-	m_lightVBO[Light::Spot]->BufferData(sLights);
+	m_lightVO[Light::Spot]->instances.BufferData(sLights);
 }
 
 #pragma endregion

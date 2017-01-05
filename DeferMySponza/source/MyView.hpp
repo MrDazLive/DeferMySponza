@@ -40,6 +40,7 @@ public:
 private:
 #pragma region Structs
 	struct Mesh;
+	struct Shape;
 	struct Vertex;
 	struct Instance;
 
@@ -65,13 +66,14 @@ private:
 		enum GBuffer {
 			Colour = 0,
 			Position = 1,
-			Normal = 2
+			Normal = 2,
+			Material = 3
 		};
 
 		FrameBufferObject *m_gFbo{ nullptr };
 		FrameBufferObject *m_lFbo{ nullptr };
 		Texture *m_dbuffer{ nullptr };
-		Texture *m_gBuffer[3]{ nullptr };
+		Texture *m_gBuffer[4]{ nullptr };
 		Texture *m_lBuffer{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
@@ -79,8 +81,7 @@ private:
 		NonStaticVOs *m_nonStaticVOs{ nullptr };
 		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
 
-		VertexArrayObject *m_lightVAO[3]{ nullptr };
-		VertexBufferObject *m_quadVBO{ nullptr };
+		Shape *m_lightVO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
 		VertexBufferObject *m_materialUBO{ nullptr };
@@ -93,7 +94,6 @@ private:
 			Point = 1,
 			Spot = 2
 		};
-		VertexBufferObject *m_lightVBO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
@@ -110,7 +110,7 @@ private:
 		ShaderProgram *m_environmentProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
-		Shader *m_vsLight{ nullptr };
+		Shader *m_vsLight[3]{ nullptr };
 		Shader *m_fsLight[3]{ nullptr };
 
 		Shader *m_vsInstanced{ nullptr };
