@@ -130,6 +130,7 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glBlendEquation(GL_FUNC_ADD);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	glDepthMask(GL_TRUE);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -615,6 +616,17 @@ void MyView::PrepareTextures() {
 	for (int i = 0; i < 5; i++) {
 		m_shadowTexture[i] = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
 		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT);
+
+		m_sFbo->AttachTexture(m_shadowTexture[i], false);
+		m_sFbo->SetDraw();
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		std::string texture = "shadowMap[" + std::to_string(i) + "]";
+		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
+
+		m_lightProgram[Light::Spot]->BindUniformM4(glm::mat4(0), transform);
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i);
 	}
 }
 
@@ -732,15 +744,12 @@ void MyView::DeferredRender() {
 	glEnable(GL_STENCIL_TEST);
 
 	glStencilFunc(GL_ALWAYS, 1, ~0);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 	DrawEnvironment();
 
 	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y, m_lFbo->getID());
 
 	UpdateLights();
-
-	m_sFbo->SetActive();
 
 	DrawShadows();
 
@@ -823,6 +832,10 @@ void MyView::DrawEnvironment() {
 }
 
 void MyView::DrawShadows(bool drawStatic) {
+	glViewport(0, 0, 1024, 1024);
+	glm::mat4 bias(0.5f);
+	bias[3] += glm::vec4(0.5f);
+
 	for (int i = 0; i < 5; i++) {
 		auto &light = scene_->getAllSpotLights()[i];
 
@@ -844,6 +857,7 @@ void MyView::DrawShadows(bool drawStatic) {
 		glm::mat4 combined_transform = depthProjectionMatrix * depthViewMatrix;
 
 		m_sFbo->AttachTexture(m_shadowTexture[i], false);
+		m_sFbo->SetDraw();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -875,10 +889,14 @@ void MyView::DrawShadows(bool drawStatic) {
 			glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 		}
 
-		std::string shadow = "shadowMap[" + std::to_string(i) + "]";
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], shadow, i);
+		std::string texture = "shadowMap[" + std::to_string(i) + "]";
+		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
+
+		m_lightProgram[Light::Spot]->BindUniformM4(bias * combined_transform, transform);
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i);
 	}
 
+	glViewport(0, 0, view_size.x, view_size.y);
 	VertexArrayObject::Reset();
 }
 
