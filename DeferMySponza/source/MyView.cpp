@@ -397,10 +397,15 @@ void MyView::PrepareVBOs() {
 	m_lightVO[Light::Point]->elements.BufferData(sphere->indexArray()[0], sphere->indexCount());
 	m_lightVO[Light::Point]->elementCount = sphere->indexCount();
 
-	tsl::IndexedMeshPtr cone = tsl::createConePtr(1.0f, 1.0f, 12);
+	tsl::IndexedMeshPtr cone = tsl::createConePtr(1.0f, 1.0f, 6);
 	cone = tsl::cloneIndexedMeshAsTriangleListPtr(cone.get());
 
-	m_lightVO[Light::Spot]->vertices.BufferData(cone->positionArray()[0], cone->vertexCount());
+	std::vector<glm::vec3> positions;
+	for (int i = 0; i < cone->vertexCount(); i++) {
+		positions.push_back((const glm::vec3&)cone->positionArray()[i] - glm::vec3(0, 0, 1));
+	}
+
+	m_lightVO[Light::Spot]->vertices.BufferData(positions);
 	m_lightVO[Light::Spot]->elements.BufferData(cone->indexArray()[0], cone->indexCount());
 	m_lightVO[Light::Spot]->elementCount = cone->indexCount();
 }
