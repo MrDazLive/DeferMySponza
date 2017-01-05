@@ -17,6 +17,7 @@
 #include "rendering\VertexArrayObject.h"
 #include "rendering\VertexBufferObject.h"
 #include "rendering\enums\Buffer.h"
+#include "rendering\enums\Light.h"
 
 #include "utilities\TimeQuery.h"
 

@@ -332,6 +332,7 @@
     <ClInclude Include="source\MyController.hpp" />
     <ClInclude Include="source\MyView.hpp" />
     <ClInclude Include="source\rendering\enums\Buffer.h" />
+    <ClInclude Include="source\rendering\enums\Light.h" />
     <ClInclude Include="source\rendering\enums\Mode.h" />
     <ClInclude Include="source\rendering\enums\PostProcess.h" />
     <ClInclude Include="source\rendering\FrameBufferObject.h" />

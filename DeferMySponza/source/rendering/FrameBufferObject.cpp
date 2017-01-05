@@ -59,6 +59,7 @@ void FrameBufferObject::SetActive() {
 
 void FrameBufferObject::SetDraw() {
 	FrameBufferObject::SetDraw(this);
+	glDrawBuffers(m_drawBuffer.size(), m_drawBuffer.data());
 }
 
 void FrameBufferObject::SetRead() {
@@ -84,7 +85,6 @@ void FrameBufferObject::AttachTexture(const Texture *texture, bool drawBuffer) {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, texture->getAttachment(), texture->getTarget(), texture->getID(), 0);
 	if (drawBuffer) {
 		m_drawBuffer.push_back(texture->getAttachment());
-		glDrawBuffers(m_drawBuffer.size(), m_drawBuffer.data());
 	}
 	FrameBufferObject::Reset(GL_DRAW_FRAMEBUFFER);
 }

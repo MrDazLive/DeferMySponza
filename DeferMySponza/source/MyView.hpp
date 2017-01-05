@@ -88,13 +88,6 @@ private:
 		Texture *m_mainTexture[7]{ nullptr };
 		Texture *m_normalTexture[7]{ nullptr };
 	#pragma endregion
-	#pragma region Lights
-		enum Light {
-			Directional = 0,
-			Point = 1,
-			Spot = 2
-		};
-	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
 		std::vector<Mesh> m_nonStaticMeshes;

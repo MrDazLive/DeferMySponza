@@ -108,6 +108,9 @@
     <ClInclude Include="source\rendering\enums\PostProcess.h">
       <Filter>Header Files\Rendering\Enums</Filter>
     </ClInclude>
+    <ClInclude Include="source\rendering\enums\Light.h">
+      <Filter>Header Files\Rendering\Enums</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\post_vs.glsl">
