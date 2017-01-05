@@ -72,6 +72,7 @@ private:
 
 		FrameBufferObject *m_gFbo{ nullptr };
 		FrameBufferObject *m_lFbo{ nullptr };
+		FrameBufferObject *m_sFbo{ nullptr };
 		Texture *m_dbuffer{ nullptr };
 		Texture *m_gBuffer[4]{ nullptr };
 		Texture *m_lBuffer{ nullptr };
@@ -87,6 +88,7 @@ private:
 		VertexBufferObject *m_materialUBO{ nullptr };
 		Texture *m_mainTexture[7]{ nullptr };
 		Texture *m_normalTexture[7]{ nullptr };
+		Texture *m_shadowTexture[5]{ nullptr };
 	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
@@ -101,14 +103,19 @@ private:
 
 		ShaderProgram *m_lightProgram[3]{ nullptr };
 		ShaderProgram *m_environmentProgram[2]{ nullptr };
+		ShaderProgram *m_shadowProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
 		Shader *m_vsLight[3]{ nullptr };
 		Shader *m_fsLight[3]{ nullptr };
 
-		Shader *m_vsInstanced{ nullptr };
-		Shader *m_vsNonInstanced{ nullptr };
+		Shader *m_vsInstancedEnvironment{ nullptr };
+		Shader *m_vsNonInstancedEnvironment{ nullptr };
 		Shader *m_fsEnvironment{ nullptr };
+
+		Shader *m_vsInstancedShadow{ nullptr };
+		Shader *m_vsNonInstancedShadow{ nullptr };
+		Shader *m_fsShadow{ nullptr };
 	#pragma endregion
 	#pragma region Post-Processing
 		PostProcessing *m_antiAliasing;
@@ -150,6 +157,7 @@ private:
 	void PostProcessRender();
 
 	void DrawEnvironment();
+	void DrawShadows(bool drawStatic = false);
 	void DrawLights();
 #pragma endregion
 #pragma region Additional Methods

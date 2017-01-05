@@ -22,6 +22,10 @@ GLuint FrameBufferObject::getID() const {
 	return m_id;
 }
 
+const std::vector<GLenum> &FrameBufferObject::getBuffers() const {
+	return m_drawBuffer;
+}
+
 #pragma endregion
 #pragma region Static Methods
 
@@ -31,14 +35,34 @@ void FrameBufferObject::Reset(GLenum target) {
 
 void FrameBufferObject::SetActive(const FrameBufferObject *fbo) {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo->getID());
+	if (fbo->getBuffers().size() != 0) {
+		glDrawBuffers(fbo->getBuffers().size(), fbo->getBuffers().data());
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+	}
+	else {
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+	}
 }
 
 void FrameBufferObject::SetDraw(const FrameBufferObject *fbo) {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo->getID());
+	if (fbo->getBuffers().size() != 0) {
+		glDrawBuffers(fbo->getBuffers().size(), fbo->getBuffers().data());
+	}
+	else {
+		glDrawBuffer(GL_NONE);
+	}
 }
 
 void FrameBufferObject::SetRead(const FrameBufferObject *fbo) {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo->getID());
+	if (fbo->getBuffers().size() != 0) {
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+	}
+	else {
+		glReadBuffer(GL_NONE);
+	}
 }
 
 void FrameBufferObject::LogInfo(const FrameBufferObject *fbo) {
@@ -59,7 +83,6 @@ void FrameBufferObject::SetActive() {
 
 void FrameBufferObject::SetDraw() {
 	FrameBufferObject::SetDraw(this);
-	glDrawBuffers(m_drawBuffer.size(), m_drawBuffer.data());
 }
 
 void FrameBufferObject::SetRead() {

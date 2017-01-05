@@ -149,5 +149,14 @@
     <None Include="shaders\spot_light_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="shaders\instanced_shadow_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\non_instanced_shadow_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shadow_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

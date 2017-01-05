@@ -350,11 +350,14 @@
     <None Include="shaders\environment_fs.glsl" />
     <None Include="shaders\directional_light_fs.glsl" />
     <None Include="shaders\directional_light_vs.glsl" />
+    <None Include="shaders\instanced_shadow_vs.glsl" />
     <None Include="shaders\non_instanced_environment_vs.glsl" />
     <None Include="shaders\anti_aliasing_fs.glsl" />
+    <None Include="shaders\non_instanced_shadow_vs.glsl" />
     <None Include="shaders\point_light_fs.glsl" />
     <None Include="shaders\point_light_vs.glsl" />
     <None Include="shaders\post_vs.glsl" />
+    <None Include="shaders\shadow_fs.glsl" />
     <None Include="shaders\spot_light_fs.glsl" />
     <None Include="shaders\spot_light_vs.glsl" />
   </ItemGroup>

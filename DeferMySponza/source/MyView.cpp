@@ -138,6 +138,8 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 	PrepareVOs();
 	PrepareTimers();
 
+	DrawShadows(true);
+
 	m_antiAliasing = new PostProcessing("resource:///post_vs.glsl", "resource:///anti_aliasing_fs.glsl");
 	m_antiAliasing->setSourceTexture(m_lBuffer);
 	m_celShading = new PostProcessing("resource:///post_vs.glsl", "resource:///cel_shading_fs.glsl");
@@ -168,6 +170,7 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 
 	delete m_gFbo;
 	delete m_lFbo;
+	delete m_sFbo;
 	delete m_dbuffer;
 	delete m_lBuffer;
 	delete m_gBuffer[GBuffer::Colour];
@@ -187,6 +190,12 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	for (Texture *ptr : m_mainTexture) {
 		delete ptr;
 	}
+	for (Texture *ptr : m_normalTexture) {
+		delete ptr;
+	}
+	for (Texture *ptr : m_shadowTexture) {
+		delete ptr;
+	}
 
 	delete m_lightProgram[Light::Directional];
 	delete m_lightProgram[Light::Point];
@@ -202,9 +211,16 @@ void MyView::windowViewDidStop(tygra::Window * window) {
 	delete m_environmentProgram[Program::Instanced];
 	delete m_environmentProgram[Program::NonInstanced];
 
-	delete m_vsInstanced;
-	delete m_vsNonInstanced;
+	delete m_vsInstancedEnvironment;
+	delete m_vsNonInstancedEnvironment;
 	delete m_fsEnvironment;
+
+	delete m_shadowProgram[Program::Instanced];
+	delete m_shadowProgram[Program::NonInstanced];
+
+	delete m_vsInstancedShadow;
+	delete m_vsNonInstancedShadow;
+	delete m_fsShadow;
 
 	delete m_queryForwardRender;
 	delete m_queryDeferredRender;
@@ -424,14 +440,23 @@ void MyView::PrepareTimers() {
 }
 
 void MyView::PrepareShaders() {
-	m_vsInstanced = new Shader(GL_VERTEX_SHADER);
-	m_vsInstanced->LoadFile("resource:///instanced_environment_vs.glsl");
+	m_vsInstancedEnvironment = new Shader(GL_VERTEX_SHADER);
+	m_vsInstancedEnvironment->LoadFile("resource:///instanced_environment_vs.glsl");
 
-	m_vsNonInstanced = new Shader(GL_VERTEX_SHADER);
-	m_vsNonInstanced->LoadFile("resource:///non_instanced_environment_vs.glsl");
+	m_vsNonInstancedEnvironment = new Shader(GL_VERTEX_SHADER);
+	m_vsNonInstancedEnvironment->LoadFile("resource:///non_instanced_environment_vs.glsl");
 
 	m_fsEnvironment = new Shader(GL_FRAGMENT_SHADER);
 	m_fsEnvironment->LoadFile("resource:///environment_fs.glsl");
+
+	m_vsInstancedShadow = new Shader(GL_VERTEX_SHADER);
+	m_vsInstancedShadow->LoadFile("resource:///instanced_shadow_vs.glsl");
+
+	m_vsNonInstancedShadow = new Shader(GL_VERTEX_SHADER);
+	m_vsNonInstancedShadow->LoadFile("resource:///non_instanced_shadow_vs.glsl");
+
+	m_fsShadow = new Shader(GL_FRAGMENT_SHADER);
+	m_fsShadow->LoadFile("resource:///shadow_fs.glsl");
 
 	m_vsLight[Light::Directional] = new Shader(GL_VERTEX_SHADER);
 	m_vsLight[Light::Directional]->LoadFile("resource:///directional_light_vs.glsl");
@@ -456,7 +481,7 @@ void MyView::PreparePrograms() {
 	ShaderProgram *p = new ShaderProgram();
 	m_environmentProgram[Program::Instanced] = p;
 
-	p->AddShader(m_vsInstanced, m_fsEnvironment);
+	p->AddShader(m_vsInstancedEnvironment, m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate", "model");
 	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
@@ -468,7 +493,7 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_environmentProgram[Program::NonInstanced] = p;
 
-	p->AddShader(m_vsNonInstanced, m_fsEnvironment);
+	p->AddShader(m_vsNonInstancedEnvironment, m_fsEnvironment);
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate");
 	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
@@ -476,6 +501,24 @@ void MyView::PreparePrograms() {
 	p->Link();
 
 	p->BindBlock(m_materialUBO, "block_material");
+
+	p = new ShaderProgram();
+	m_shadowProgram[Program::Instanced] = p;
+
+	p->AddShader(m_vsNonInstancedShadow, m_fsShadow);
+
+	p->AddInAttribute("vertex_position", "model");
+	p->AddOutAttribute("fragment_depth");
+
+	p = new ShaderProgram();
+	m_shadowProgram[Program::NonInstanced] = p;
+
+	p->AddShader(m_vsNonInstancedShadow, m_fsShadow);
+
+	p->AddInAttribute("vertex_position");
+	p->AddOutAttribute("fragment_depth");
+
+	p->Link();
 
 	p = new ShaderProgram();
 	m_lightProgram[Light::Directional] = p;
@@ -568,6 +611,11 @@ void MyView::PrepareTextures() {
 			ptr->BindUniformTexture(m_normalTexture[i], normal, (i * 2) + 1);
 		}
 	}
+
+	for (int i = 0; i < 5; i++) {
+		m_shadowTexture[i] = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
+		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT);
+	}
 }
 
 void MyView::PrepareGBs() {
@@ -579,22 +627,18 @@ void MyView::PrepareGBs() {
 	m_gFbo->AttachTexture(m_dbuffer, false);
 
 	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
-	m_gBuffer[GBuffer::Colour]->SetActive();
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Colour]);
 
 	m_gBuffer[GBuffer::Position] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
-	m_gBuffer[GBuffer::Position]->SetActive();
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Position]);
 
 	m_gBuffer[GBuffer::Normal] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
-	m_gBuffer[GBuffer::Normal]->SetActive();
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
 
 	m_gBuffer[GBuffer::Material] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
-	m_gBuffer[GBuffer::Material]->SetActive();
 	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material]);
 
@@ -603,9 +647,10 @@ void MyView::PrepareGBs() {
 	m_lFbo->AttachTexture(m_dbuffer, false);
 
 	m_lBuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
-	m_lBuffer->SetActive();
 	m_lBuffer->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
 	m_lFbo->AttachTexture(m_lBuffer);
+
+	m_sFbo = new FrameBufferObject();
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
@@ -693,8 +738,11 @@ void MyView::DeferredRender() {
 
 	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y, m_lFbo->getID());
 
-	m_gFbo->SetRead();
-	m_lFbo->SetDraw();
+	UpdateLights();
+
+	m_sFbo->SetActive();
+
+	DrawShadows();
 
 	glDepthMask(GL_FALSE);
 	glDisable(GL_DEPTH_TEST);
@@ -702,7 +750,8 @@ void MyView::DeferredRender() {
 
 	glStencilFunc(GL_LEQUAL, 1, ~0);
 
-	UpdateLights();
+	m_gFbo->SetRead();
+	m_lFbo->SetDraw();
 
 	DrawLights();
 
@@ -768,6 +817,66 @@ void MyView::DrawEnvironment() {
 		m_environmentProgram[Program::NonInstanced]->BindUniformM4(model_transform, "model.transform");
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
+	}
+
+	VertexArrayObject::Reset();
+}
+
+void MyView::DrawShadows(bool drawStatic) {
+	for (int i = 0; i < 5; i++) {
+		auto &light = scene_->getAllSpotLights()[i];
+
+		bool cast = light.getCastShadow();
+		bool isStatic = light.isStatic();
+
+		if (!cast || (isStatic && !drawStatic)) {
+			continue;
+		}
+
+		glm::vec3 pos = (const glm::vec3&)light.getPosition();
+		glm::vec3 dir = (const glm::vec3&)light.getDirection();
+		float ran = light.getRange();
+		float fov = glm::radians(light.getConeAngleDegrees());
+
+		glm::mat4 depthProjectionMatrix = glm::perspective<float>(fov, 1.0f, 1.0f, ran);
+		glm::mat4 depthViewMatrix = glm::lookAt(pos, pos + dir, glm::vec3(0, 1, 0));
+
+		glm::mat4 combined_transform = depthProjectionMatrix * depthViewMatrix;
+
+		m_sFbo->AttachTexture(m_shadowTexture[i], false);
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		m_shadowProgram[Program::Instanced]->SetActive();
+		m_shadowProgram[Program::Instanced]->BindUniformM4(combined_transform, "combined_transform");
+
+		m_instancedVOs->vao.SetActive();
+		for (const Mesh& mesh : m_instancedMeshes) {
+			glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
+		}
+
+		UpdateNonStaticTransforms();
+		m_nonStaticVOs->vao.SetActive();
+		for (const Mesh& mesh : m_nonStaticMeshes) {
+			glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
+		}
+
+		m_shadowProgram[Program::NonInstanced]->SetActive();
+		m_shadowProgram[Program::NonInstanced]->BindUniformM4(combined_transform, "combined_transform");
+
+		m_nonInstancedVOs->vao.SetActive();
+		GLuint count = m_nonInstancedMeshes.size();
+		for (GLuint i = 0; i < count; i++) {
+			const Mesh &mesh = m_nonInstancedMeshes[i];
+
+			glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
+			m_shadowProgram[Program::NonInstanced]->BindUniformM4(model_transform, "model.transform");
+
+			glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
+		}
+
+		std::string shadow = "shadowMap[" + std::to_string(i) + "]";
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], shadow, i);
 	}
 
 	VertexArrayObject::Reset();

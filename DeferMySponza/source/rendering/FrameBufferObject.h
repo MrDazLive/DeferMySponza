@@ -13,6 +13,7 @@ public:
 #pragma endregion
 #pragma region Getters/Setters
 	GLuint getID() const;
+	const std::vector<GLenum> &getBuffers() const;
 #pragma endregion
 #pragma region Static Methods
 	static void Reset(GLenum target = GL_FRAMEBUFFER);

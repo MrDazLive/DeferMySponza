@@ -32,6 +32,8 @@ uniform sampler2DRect positionMap;
 uniform sampler2DRect normalMap;
 uniform sampler2DRect materialMap;
 
+uniform	sampler2DRect mainTexture[7];
+
 flat in Light fixed_light;
 
 layout(location = 0)out vec3 fragment_colour;
