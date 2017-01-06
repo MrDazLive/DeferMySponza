@@ -506,10 +506,12 @@ void MyView::PreparePrograms() {
 	p = new ShaderProgram();
 	m_shadowProgram[Program::Instanced] = p;
 
-	p->AddShader(m_vsNonInstancedShadow, m_fsShadow);
+	p->AddShader(m_vsInstancedShadow, m_fsShadow);
 
 	p->AddInAttribute("vertex_position", "model");
 	p->AddOutAttribute("fragment_depth");
+
+	p->Link();
 
 	p = new ShaderProgram();
 	m_shadowProgram[Program::NonInstanced] = p;
@@ -613,6 +615,7 @@ void MyView::PrepareTextures() {
 		}
 	}
 
+	m_lightProgram[Light::Spot]->SetActive();
 	for (int i = 0; i < 5; i++) {
 		m_shadowTexture[i] = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
 		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT);
@@ -626,7 +629,7 @@ void MyView::PrepareTextures() {
 		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
 
 		m_lightProgram[Light::Spot]->BindUniformM4(glm::mat4(0), transform);
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i);
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i + 4);
 	}
 }
 
@@ -892,8 +895,9 @@ void MyView::DrawShadows(bool drawStatic) {
 		std::string texture = "shadowMap[" + std::to_string(i) + "]";
 		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
 
+		m_lightProgram[Light::Spot]->SetActive();
 		m_lightProgram[Light::Spot]->BindUniformM4(bias * combined_transform, transform);
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i);
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i + 4);
 	}
 
 	glViewport(0, 0, view_size.x, view_size.y);
