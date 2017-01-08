@@ -12,7 +12,9 @@ layout(location = 0) in vec3 vertex_coord;
 layout(location = 1) in Light light;
 
 uniform mat4 combined_transform;
+uniform	mat4 shadowTransform[5];
 
+flat out int fixed_instance;
 flat out Light fixed_light;
 
 mat4 lookAt(vec3 eye, vec3 center, vec3 up) {
@@ -33,4 +35,6 @@ void main(void) {
 	gl_Position = combined_transform * model * view * vec4(vertex_coord, 1.0);
 	fixed_light = light;
 	fixed_light.direction = normalize(light.direction);
+
+	fixed_instance = gl_InstanceID;
 }

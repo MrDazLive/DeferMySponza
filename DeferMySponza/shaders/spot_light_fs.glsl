@@ -32,8 +32,10 @@ uniform sampler2DRect positionMap;
 uniform sampler2DRect normalMap;
 uniform sampler2DRect materialMap;
 
-uniform	sampler2DRect mainTexture[7];
+uniform	mat4 shadowTransform[5];
+uniform	sampler2DRect shadowMap[5];
 
+flat in int fixed_instance;
 flat in Light fixed_light;
 
 layout(location = 0)out vec3 fragment_colour;
@@ -98,6 +100,9 @@ void main(void) {
    	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	TextureCoordinate = texture(materialMap, gl_FragCoord.xy).xy;
 	MaterialID = int(texture(materialMap, gl_FragCoord.xy).z);
-	
-	fragment_colour = getSpot(fixed_light);
+
+	vec4 Shadow = shadowTransform[fixed_instance] * vec4(WorldPosition, 1);
+	float vis = (texture(shadowMap[fixed_instance], Shadow.xy).z < Shadow.z) ? -1.0f : 1.0f;
+
+	fragment_colour = getSpot(fixed_light) * vis;
 }

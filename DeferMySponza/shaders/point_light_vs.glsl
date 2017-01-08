@@ -14,7 +14,7 @@ uniform mat4 combined_transform;
 flat out Light fixed_light;
 
 void main(void) {
-	float r = light.range * 2;
+	float r = light.range;
 	vec3 pos = light.position;
 	mat4 model = mat4( vec4( r, 0, 0, 0), vec4(0, r, 0, 0), vec4(0, 0, r, 0), vec4(pos, 1));
 
