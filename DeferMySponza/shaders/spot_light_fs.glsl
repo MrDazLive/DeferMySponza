@@ -101,7 +101,8 @@ void main(void) {
 	TextureCoordinate = texture(materialMap, gl_FragCoord.xy).xy;
 	MaterialID = int(texture(materialMap, gl_FragCoord.xy).z);
 
-	vec4 Shadow = shadowTransform[fixed_instance] * vec4(WorldPosition, 1);
+	vec4 ShadowPos = shadowTransform[fixed_instance] * vec4(WorldPosition, 1);
+	vec3 Shadow = ShadowPos.xyz / ShadowPos.w;
 	float vis = (texture(shadowMap[fixed_instance], Shadow.xy).z < Shadow.z) ? -1.0f : 1.0f;
 
 	fragment_colour = getSpot(fixed_light) * vis;

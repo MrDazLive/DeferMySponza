@@ -70,25 +70,25 @@ private:
 			Material = 3
 		};
 
-		FrameBufferObject *m_gFbo{ nullptr };
-		FrameBufferObject *m_lFbo{ nullptr };
-		FrameBufferObject *m_sFbo{ nullptr };
-		Texture *m_dbuffer{ nullptr };
-		Texture *m_gBuffer[4]{ nullptr };
-		Texture *m_lBuffer{ nullptr };
+		std::unique_ptr<FrameBufferObject> m_gFbo{ nullptr };
+		std::unique_ptr<FrameBufferObject> m_lFbo{ nullptr };
+		std::unique_ptr<FrameBufferObject> m_sFbo{ nullptr };
+		std::unique_ptr<Texture> m_dbuffer{ nullptr };
+		std::unique_ptr<Texture> m_gBuffer[4]{ nullptr };
+		std::unique_ptr<Texture> m_lBuffer{ nullptr };
 	#pragma endregion
 	#pragma region Vertex Objects
-		InstanceVOs *m_instancedVOs{ nullptr };
-		NonStaticVOs *m_nonStaticVOs{ nullptr };
-		NonInstanceVOs *m_nonInstancedVOs{ nullptr };
+		std::unique_ptr<InstanceVOs> m_instancedVOs{ nullptr };
+		std::unique_ptr<NonStaticVOs> m_nonStaticVOs{ nullptr };
+		std::unique_ptr<NonInstanceVOs> m_nonInstancedVOs{ nullptr };
 
-		Shape *m_lightVO[3]{ nullptr };
+		std::unique_ptr<Shape> m_lightVO[3]{ nullptr };
 	#pragma endregion
 	#pragma region Materials & Textures
-		VertexBufferObject *m_materialUBO{ nullptr };
-		Texture *m_mainTexture[7]{ nullptr };
-		Texture *m_normalTexture[7]{ nullptr };
-		Texture *m_shadowTexture[5]{ nullptr };
+		std::unique_ptr<VertexBufferObject> m_materialUBO{ nullptr };
+		std::unique_ptr<Texture> m_mainTexture[7]{ nullptr };
+		std::unique_ptr<Texture> m_normalTexture[7]{ nullptr };
+		std::unique_ptr<Texture> m_shadowTexture[5]{ nullptr };
 	#pragma endregion
 	#pragma region Mesh Instances
 		std::vector<Mesh> m_instancedMeshes;
@@ -101,30 +101,30 @@ private:
 			NonInstanced = 1
 		};
 
-		ShaderProgram *m_lightProgram[3]{ nullptr };
-		ShaderProgram *m_environmentProgram[2]{ nullptr };
-		ShaderProgram *m_shadowProgram[2]{ nullptr };
+		std::unique_ptr<ShaderProgram> m_lightProgram[3]{ nullptr };
+		std::unique_ptr<ShaderProgram> m_environmentProgram[2]{ nullptr };
+		std::unique_ptr<ShaderProgram> m_shadowProgram[2]{ nullptr };
 	#pragma endregion
 	#pragma region Shaders
-		Shader *m_vsLight[3]{ nullptr };
-		Shader *m_fsLight[3]{ nullptr };
+		std::unique_ptr<Shader> m_vsLight[3]{ nullptr };
+		std::unique_ptr<Shader> m_fsLight[3]{ nullptr };
 
-		Shader *m_vsInstancedEnvironment{ nullptr };
-		Shader *m_vsNonInstancedEnvironment{ nullptr };
-		Shader *m_fsEnvironment{ nullptr };
+		std::unique_ptr<Shader> m_vsInstancedEnvironment{ nullptr };
+		std::unique_ptr<Shader> m_vsNonInstancedEnvironment{ nullptr };
+		std::unique_ptr<Shader> m_fsEnvironment{ nullptr };
 
-		Shader *m_vsInstancedShadow{ nullptr };
-		Shader *m_vsNonInstancedShadow{ nullptr };
-		Shader *m_fsShadow{ nullptr };
+		std::unique_ptr<Shader> m_vsInstancedShadow{ nullptr };
+		std::unique_ptr<Shader> m_vsNonInstancedShadow{ nullptr };
+		std::unique_ptr<Shader> m_fsShadow{ nullptr };
 	#pragma endregion
 	#pragma region Post-Processing
-		PostProcessing *m_antiAliasing;
-		PostProcessing *m_celShading;
+		std::unique_ptr<PostProcessing> m_antiAliasing;
+		std::unique_ptr<PostProcessing> m_celShading;
 	#pragma endregion
 	#pragma region Time Queries
-		TimeQuery *m_queryForwardRender{ nullptr };
-		TimeQuery *m_queryDeferredRender{ nullptr };
-		TimeQuery *m_queryPostProcessing{ nullptr };
+		std::unique_ptr<TimeQuery> m_queryForwardRender{ nullptr };
+		std::unique_ptr<TimeQuery> m_queryDeferredRender{ nullptr };
+		std::unique_ptr<TimeQuery> m_queryPostProcessing{ nullptr };
 	#pragma endregion
 #pragma endregion
 #pragma region Window Methods

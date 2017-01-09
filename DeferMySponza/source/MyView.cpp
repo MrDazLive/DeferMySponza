@@ -141,10 +141,10 @@ void MyView::windowViewWillStart(tygra::Window * window) {
 
 	DrawShadows(true);
 
-	m_antiAliasing = new PostProcessing("resource:///post_vs.glsl", "resource:///anti_aliasing_fs.glsl");
-	m_antiAliasing->setSourceTexture(m_lBuffer);
-	m_celShading = new PostProcessing("resource:///post_vs.glsl", "resource:///cel_shading_fs.glsl");
-	m_celShading->setSourceTexture(m_lBuffer);
+	m_antiAliasing = std::make_unique<PostProcessing>("resource:///post_vs.glsl", "resource:///anti_aliasing_fs.glsl");
+	m_antiAliasing->setSourceTexture(m_lBuffer.get());
+	m_celShading = std::make_unique<PostProcessing>("resource:///post_vs.glsl", "resource:///cel_shading_fs.glsl");
+	m_celShading->setSourceTexture(m_lBuffer.get());
 }
 
 void MyView::windowViewDidReset(tygra::Window * window,
@@ -166,66 +166,7 @@ void MyView::windowViewDidReset(tygra::Window * window,
 }
 
 void MyView::windowViewDidStop(tygra::Window * window) {
-	delete m_antiAliasing;
-	delete m_celShading;
 
-	delete m_gFbo;
-	delete m_lFbo;
-	delete m_sFbo;
-	delete m_dbuffer;
-	delete m_lBuffer;
-	delete m_gBuffer[GBuffer::Colour];
-	delete m_gBuffer[GBuffer::Position];
-	delete m_gBuffer[GBuffer::Normal];
-	delete m_gBuffer[GBuffer::Material];
-
-	delete m_instancedVOs;
-	delete m_nonStaticVOs;
-	delete m_nonInstancedVOs;
-
-	delete m_lightVO[Light::Directional];
-	delete m_lightVO[Light::Point];
-	delete m_lightVO[Light::Spot];
-
-	delete m_materialUBO;
-	for (Texture *ptr : m_mainTexture) {
-		delete ptr;
-	}
-	for (Texture *ptr : m_normalTexture) {
-		delete ptr;
-	}
-	for (Texture *ptr : m_shadowTexture) {
-		delete ptr;
-	}
-
-	delete m_lightProgram[Light::Directional];
-	delete m_lightProgram[Light::Point];
-	delete m_lightProgram[Light::Spot];
-
-	delete m_vsLight[Light::Directional];
-	delete m_vsLight[Light::Point];
-	delete m_vsLight[Light::Spot];
-	delete m_fsLight[Light::Directional];
-	delete m_fsLight[Light::Point];
-	delete m_fsLight[Light::Spot];
-
-	delete m_environmentProgram[Program::Instanced];
-	delete m_environmentProgram[Program::NonInstanced];
-
-	delete m_vsInstancedEnvironment;
-	delete m_vsNonInstancedEnvironment;
-	delete m_fsEnvironment;
-
-	delete m_shadowProgram[Program::Instanced];
-	delete m_shadowProgram[Program::NonInstanced];
-
-	delete m_vsInstancedShadow;
-	delete m_vsNonInstancedShadow;
-	delete m_fsShadow;
-
-	delete m_queryForwardRender;
-	delete m_queryDeferredRender;
-	delete m_queryPostProcessing;
 }
 
 void MyView::windowViewRender(tygra::Window * window) {
@@ -283,13 +224,13 @@ void MyView::TogglePostProcessing() {
 #pragma region Setup Methods
 
 void MyView::PrepareVOs() {
-	m_instancedVOs = new InstanceVOs();
-	m_nonStaticVOs = new NonStaticVOs();
-	m_nonInstancedVOs = new NonInstanceVOs();
+	m_instancedVOs = std::make_unique<InstanceVOs>();
+	m_nonStaticVOs = std::make_unique<NonStaticVOs>();
+	m_nonInstancedVOs = std::make_unique<NonInstanceVOs>();
 
-	m_lightVO[Light::Directional] = new Shape();
-	m_lightVO[Light::Point] = new Shape();
-	m_lightVO[Light::Spot] = new Shape();
+	m_lightVO[Light::Directional] = std::make_unique<Shape>();
+	m_lightVO[Light::Point] = std::make_unique<Shape>();
+	m_lightVO[Light::Spot] = std::make_unique<Shape>();
 
 	PrepareGBs();
 	PrepareMeshData();
@@ -429,135 +370,135 @@ void MyView::PrepareVBOs() {
 }
 
 void MyView::PrepareUBOs() {
-	m_materialUBO = new VertexBufferObject(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	m_materialUBO = std::make_unique<VertexBufferObject>(GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 	m_materialUBO->BindRange(0, 0, sizeof(scene::Material) * 7);
 	m_materialUBO->BufferData(scene_->getAllMaterials()[0], 7);
 }
 
 void MyView::PrepareTimers() {
-	m_queryForwardRender = new TimeQuery();
-	m_queryDeferredRender = new TimeQuery();
-	m_queryPostProcessing = new TimeQuery();
+	m_queryForwardRender = std::make_unique<TimeQuery>();
+	m_queryDeferredRender = std::make_unique<TimeQuery>();
+	m_queryPostProcessing = std::make_unique<TimeQuery>();
 }
 
 void MyView::PrepareShaders() {
-	m_vsInstancedEnvironment = new Shader(GL_VERTEX_SHADER);
+	m_vsInstancedEnvironment = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsInstancedEnvironment->LoadFile("resource:///instanced_environment_vs.glsl");
 
-	m_vsNonInstancedEnvironment = new Shader(GL_VERTEX_SHADER);
+	m_vsNonInstancedEnvironment = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsNonInstancedEnvironment->LoadFile("resource:///non_instanced_environment_vs.glsl");
 
-	m_fsEnvironment = new Shader(GL_FRAGMENT_SHADER);
+	m_fsEnvironment = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsEnvironment->LoadFile("resource:///environment_fs.glsl");
 
-	m_vsInstancedShadow = new Shader(GL_VERTEX_SHADER);
+	m_vsInstancedShadow = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsInstancedShadow->LoadFile("resource:///instanced_shadow_vs.glsl");
 
-	m_vsNonInstancedShadow = new Shader(GL_VERTEX_SHADER);
+	m_vsNonInstancedShadow = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsNonInstancedShadow->LoadFile("resource:///non_instanced_shadow_vs.glsl");
 
-	m_fsShadow = new Shader(GL_FRAGMENT_SHADER);
+	m_fsShadow = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsShadow->LoadFile("resource:///shadow_fs.glsl");
 
-	m_vsLight[Light::Directional] = new Shader(GL_VERTEX_SHADER);
+	m_vsLight[Light::Directional] = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsLight[Light::Directional]->LoadFile("resource:///directional_light_vs.glsl");
 
-	m_vsLight[Light::Point] = new Shader(GL_VERTEX_SHADER);
+	m_vsLight[Light::Point] = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsLight[Light::Point]->LoadFile("resource:///point_light_vs.glsl");
 
-	m_vsLight[Light::Spot] = new Shader(GL_VERTEX_SHADER);
+	m_vsLight[Light::Spot] = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsLight[Light::Spot]->LoadFile("resource:///spot_light_vs.glsl");
 
-	m_fsLight[Light::Directional] = new Shader(GL_FRAGMENT_SHADER);
+	m_fsLight[Light::Directional] = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsLight[Light::Directional]->LoadFile("resource:///directional_light_fs.glsl");
 
-	m_fsLight[Light::Point] = new Shader(GL_FRAGMENT_SHADER);
+	m_fsLight[Light::Point] = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsLight[Light::Point]->LoadFile("resource:///point_light_fs.glsl");
 
-	m_fsLight[Light::Spot] = new Shader(GL_FRAGMENT_SHADER);
+	m_fsLight[Light::Spot] = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsLight[Light::Spot]->LoadFile("resource:///spot_light_fs.glsl");
 }
 
 void MyView::PreparePrograms() {
-	ShaderProgram *p = new ShaderProgram();
-	m_environmentProgram[Program::Instanced] = p;
+	m_environmentProgram[Program::Instanced] = std::make_unique<ShaderProgram>();
+	ShaderProgram *p = m_environmentProgram[Program::Instanced].get();
 
-	p->AddShader(m_vsInstancedEnvironment, m_fsEnvironment);
+	p->AddShader(m_vsInstancedEnvironment.get(), m_fsEnvironment.get());
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate", "model");
 	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
 
 	p->Link();
 
-	p->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO.get(), "block_material");
 
-	p = new ShaderProgram();
-	m_environmentProgram[Program::NonInstanced] = p;
+	m_environmentProgram[Program::NonInstanced] = std::make_unique<ShaderProgram>();
+	p = m_environmentProgram[Program::NonInstanced].get();
 
-	p->AddShader(m_vsNonInstancedEnvironment, m_fsEnvironment);
+	p->AddShader(m_vsNonInstancedEnvironment.get(), m_fsEnvironment.get());
 
 	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate");
 	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
 
 	p->Link();
 
-	p->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO.get(), "block_material");
 
-	p = new ShaderProgram();
-	m_shadowProgram[Program::Instanced] = p;
+	m_shadowProgram[Program::Instanced] = std::make_unique<ShaderProgram>();
+	p = m_shadowProgram[Program::Instanced].get();
 
-	p->AddShader(m_vsInstancedShadow, m_fsShadow);
+	p->AddShader(m_vsInstancedShadow.get(), m_fsShadow.get());
 
 	p->AddInAttribute("vertex_position", "model");
 	p->AddOutAttribute("fragment_depth");
 
 	p->Link();
 
-	p = new ShaderProgram();
-	m_shadowProgram[Program::NonInstanced] = p;
+	m_shadowProgram[Program::NonInstanced] = std::make_unique<ShaderProgram>();
+	p = m_shadowProgram[Program::NonInstanced].get();
 
-	p->AddShader(m_vsNonInstancedShadow, m_fsShadow);
+	p->AddShader(m_vsNonInstancedShadow.get(), m_fsShadow.get());
 
 	p->AddInAttribute("vertex_position");
 	p->AddOutAttribute("fragment_depth");
 
 	p->Link();
 
-	p = new ShaderProgram();
-	m_lightProgram[Light::Directional] = p;
+	m_lightProgram[Light::Directional] = std::make_unique<ShaderProgram>();
+	p = m_lightProgram[Light::Directional].get();
 
-	p->AddShader(m_vsLight[Light::Directional], m_fsLight[Light::Directional]);
+	p->AddShader(m_vsLight[Light::Directional].get(), m_fsLight[Light::Directional].get());
 
 	p->AddInAttribute("vertex_coord", "light.direction", "light.intensity");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
 
-	p->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO.get(), "block_material");
 
-	p = new ShaderProgram();
-	m_lightProgram[Light::Point] = p;
+	m_lightProgram[Light::Point] = std::make_unique<ShaderProgram>();
+	p = m_lightProgram[Light::Point].get();
 
-	p->AddShader(m_vsLight[Light::Point], m_fsLight[Light::Point]);
+	p->AddShader(m_vsLight[Light::Point].get(), m_fsLight[Light::Point].get());
 
 	p->AddInAttribute("vertex_coord", "light.position", "light.intensity", "light.range");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
 
-	p->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO.get(), "block_material");
 
-	p = new ShaderProgram();
-	m_lightProgram[Light::Spot] = p;
+	m_lightProgram[Light::Spot] = std::make_unique<ShaderProgram>();
+	p = m_lightProgram[Light::Spot].get();
 
-	p->AddShader(m_vsLight[Light::Spot], m_fsLight[Light::Spot]);
+	p->AddShader(m_vsLight[Light::Spot].get(), m_fsLight[Light::Spot].get());
 
 	p->AddInAttribute("vertex_coord", "light.position", "light.direction", "light.intensity", "light.range", "light.coneAngle");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
 
-	p->BindBlock(m_materialUBO, "block_material");
+	p->BindBlock(m_materialUBO.get(), "block_material");
 }
 
 void MyView::PrepareMeshData() {
@@ -590,17 +531,17 @@ void MyView::PrepareTextures() {
 	
 	for (unsigned int i = 0; i < 7; i++) {
 		if (mainTexture[i].size() > 0) {
-			m_mainTexture[i] = new Texture(GL_TEXTURE_2D);
+			m_mainTexture[i] = std::make_unique<Texture>(GL_TEXTURE_2D);
 			m_mainTexture[i]->LoadFile(mainTexture[i]);
 		}
 
 		if (normalTexture[i].size() > 0) {
-			m_normalTexture[i] = new Texture(GL_TEXTURE_2D);
+			m_normalTexture[i] = std::make_unique<Texture>(GL_TEXTURE_2D);
 			m_normalTexture[i]->LoadFile(normalTexture[i]);
 		}
 	}
 
-	ShaderProgram *ptrs[2] = { m_environmentProgram[Program::Instanced], m_environmentProgram[Program::NonInstanced] };
+	ShaderProgram *ptrs[2] = { m_environmentProgram[Program::Instanced].get(), m_environmentProgram[Program::NonInstanced].get() };
 	for (ShaderProgram *ptr : ptrs) {
 		ptr->SetActive();
 		for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
@@ -610,17 +551,17 @@ void MyView::PrepareTextures() {
 			std::string main = "mainTexture[" + std::to_string(i) + "]";
 			std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-			ptr->BindUniformTexture(m_mainTexture[i], main, (i * 2));
-			ptr->BindUniformTexture(m_normalTexture[i], normal, (i * 2) + 1);
+			ptr->BindUniformTexture(m_mainTexture[i].get(), main, (i * 2));
+			ptr->BindUniformTexture(m_normalTexture[i].get(), normal, (i * 2) + 1);
 		}
 	}
 
 	m_lightProgram[Light::Spot]->SetActive();
 	for (int i = 0; i < 5; i++) {
-		m_shadowTexture[i] = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
+		m_shadowTexture[i] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
 		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT);
 
-		m_sFbo->AttachTexture(m_shadowTexture[i], false);
+		m_sFbo->AttachTexture(m_shadowTexture[i].get(), false);
 		m_sFbo->SetDraw();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
@@ -629,43 +570,43 @@ void MyView::PrepareTextures() {
 		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
 
 		m_lightProgram[Light::Spot]->BindUniformM4(glm::mat4(0), transform);
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i + 4);
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
 	}
 }
 
 void MyView::PrepareGBs() {
-	m_dbuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_DEPTH_STENCIL_ATTACHMENT);
+	m_dbuffer = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_DEPTH_STENCIL_ATTACHMENT);
 	m_dbuffer->Buffer(GL_DEPTH24_STENCIL8, 0, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
 
-	m_gFbo = new FrameBufferObject();
+	m_gFbo = std::make_unique<FrameBufferObject>();
 
-	m_gFbo->AttachTexture(m_dbuffer, false);
+	m_gFbo->AttachTexture(m_dbuffer.get(), false);
 
-	m_gBuffer[GBuffer::Colour] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
+	m_gBuffer[GBuffer::Colour] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Colour]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Colour].get());
 
-	m_gBuffer[GBuffer::Position] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
+	m_gBuffer[GBuffer::Position] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
 	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Position]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Position].get());
 
-	m_gBuffer[GBuffer::Normal] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
+	m_gBuffer[GBuffer::Normal] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
 	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal].get());
 
-	m_gBuffer[GBuffer::Material] = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
+	m_gBuffer[GBuffer::Material] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
 	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material]);
+	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material].get());
 
-	m_lFbo = new FrameBufferObject();
+	m_lFbo = std::make_unique<FrameBufferObject>();
 
-	m_lFbo->AttachTexture(m_dbuffer, false);
+	m_lFbo->AttachTexture(m_dbuffer.get(), false);
 
-	m_lBuffer = new Texture(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
+	m_lBuffer = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
 	m_lBuffer->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
-	m_lFbo->AttachTexture(m_lBuffer);
+	m_lFbo->AttachTexture(m_lBuffer.get());
 
-	m_sFbo = new FrameBufferObject();
+	m_sFbo = std::make_unique<FrameBufferObject>();
 }
 
 void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
@@ -750,7 +691,7 @@ void MyView::DeferredRender() {
 
 	DrawEnvironment();
 
-	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour], view_size.x, view_size.y, m_lFbo->getID());
+	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour].get(), view_size.x, view_size.y, m_lFbo->getID());
 
 	UpdateLights();
 
@@ -770,7 +711,7 @@ void MyView::DeferredRender() {
 	glDisable(GL_BLEND);
 	glDisable(GL_STENCIL_TEST);
 
-	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
+	m_lFbo->BlitTexture(m_lBuffer.get(), view_size.x, view_size.y);
 
 	FrameBufferObject::Reset();
 
@@ -789,7 +730,7 @@ void MyView::PostProcessRender() {
 			break;
 	}
 
-	m_lFbo->BlitTexture(m_lBuffer, view_size.x, view_size.y);
+	m_lFbo->BlitTexture(m_lBuffer.get(), view_size.x, view_size.y);
 
 	m_queryPostProcessing->End();
 }
@@ -859,7 +800,7 @@ void MyView::DrawShadows(bool drawStatic) {
 
 		glm::mat4 combined_transform = depthProjectionMatrix * depthViewMatrix;
 
-		m_sFbo->AttachTexture(m_shadowTexture[i], false);
+		m_sFbo->AttachTexture(m_shadowTexture[i].get(), false);
 		m_sFbo->SetDraw();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
@@ -897,7 +838,7 @@ void MyView::DrawShadows(bool drawStatic) {
 
 		m_lightProgram[Light::Spot]->SetActive();
 		m_lightProgram[Light::Spot]->BindUniformM4(bias * combined_transform, transform);
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i], texture, i + 4);
+		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
 	}
 
 	glViewport(0, 0, view_size.x, view_size.y);
@@ -912,10 +853,10 @@ void MyView::DrawLights() {
 
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
 	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
+	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
 
 	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
 
@@ -928,10 +869,10 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Point]->BindUniformM4(combined_transform, "combined_transform");
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
 	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
+	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
 
 	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Point]->elementCount, GL_UNSIGNED_INT, 0, 20);
 
@@ -941,10 +882,10 @@ void MyView::DrawLights() {
 	m_lightProgram[Light::Spot]->BindUniformM4(combined_transform, "combined_transform");
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
 	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour], "colourMap");
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position], "positionMap", 1);
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal], "normalMap", 2);
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Material], "materialMap", 3);
+	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
+	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
+	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
+	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
 
 	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, 5);
 
