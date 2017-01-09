@@ -151,7 +151,8 @@ void MyView::windowViewDidReset(tygra::Window * window,
                                 int width,
                                 int height) {
     glViewport(0, 0, width, height);
-	view_size = glm::vec2(width, height);
+	screen_width = width;
+	screen_height = height;
 
 	const float aspect_ratio = (float)width / (float)height;
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
@@ -365,7 +366,7 @@ void MyView::PrepareVBOs() {
 	cone = tsl::cloneIndexedMeshAsTriangleListPtr(cone.get());
 
 	std::vector<glm::vec3> positions;
-	for (int i = 0; i < cone->vertexCount(); i++) {
+	for (unsigned int i = 0; i < cone->vertexCount(); i++) {
 		positions.push_back((const glm::vec3&)cone->positionArray()[i] - glm::vec3(0, 0, 1));
 	}
 
@@ -621,21 +622,21 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 	for (Mesh &m : meshData) {
 		const auto &mesh = builder.getMeshById(m.id);
 
-		m.vertexIndex = vertices.size();
-		m.elementIndex = elements.size();
-		m.instanceIndex = instances.size();
+		m.vertexIndex = (GLuint)vertices.size();
+		m.elementIndex = (GLuint)elements.size();
+		m.instanceIndex = (GLuint)instances.size();
 
 		const auto &meshElements = mesh.getElementArray();
 		for (const auto& element : meshElements)
 			elements.push_back(element);
-		m.elementCount = meshElements.size();
+		m.elementCount = (GLuint)meshElements.size();
 
 		const auto &positions = mesh.getPositionArray();
 		const auto &normals = mesh.getNormalArray();
 		const auto &tangents = mesh.getTangentArray();
 		const auto &textureCoordinates = mesh.getTextureCoordinateArray();
 
-		const unsigned int vertexCount = positions.size();
+		const unsigned int vertexCount = (GLuint)positions.size();
 
 		if (textureCoordinates.size() == 0) {
 			for (unsigned int i = 0; i < vertexCount; i++) {
@@ -665,7 +666,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 			i.material = instance.getMaterialId();
 			instances.push_back(i);
 		}
-		m.instanceCount = meshInstances.size();
+		m.instanceCount = (GLuint)meshInstances.size();
 	}
 }
 
@@ -698,7 +699,7 @@ void MyView::DeferredRender() {
 
 	DrawEnvironment();
 
-	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour].get(), view_size.x, view_size.y, m_lFbo->getID());
+	m_gFbo->BlitTexture(m_gBuffer[GBuffer::Colour].get(), screen_width, screen_height, m_lFbo->getID());
 
 	UpdateLights();
 
@@ -718,7 +719,7 @@ void MyView::DeferredRender() {
 	glDisable(GL_BLEND);
 	glDisable(GL_STENCIL_TEST);
 
-	m_lFbo->BlitTexture(m_lBuffer.get(), view_size.x, view_size.y);
+	m_lFbo->BlitTexture(m_lBuffer.get(), screen_width, screen_height);
 
 	FrameBufferObject::Reset();
 
@@ -737,7 +738,7 @@ void MyView::PostProcessRender() {
 			break;
 	}
 
-	m_lFbo->BlitTexture(m_lBuffer.get(), view_size.x, view_size.y);
+	m_lFbo->BlitTexture(m_lBuffer.get(), screen_width, screen_height);
 
 	m_queryPostProcessing->End();
 }
@@ -765,7 +766,7 @@ void MyView::DrawEnvironment() {
 	m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
 	m_nonInstancedVOs->vao.SetActive();
-	GLuint count = m_nonInstancedMeshes.size();
+	GLuint count = (GLuint)m_nonInstancedMeshes.size();
 	for (GLuint i = 0; i < count; i++) {
 		const Mesh &mesh = m_nonInstancedMeshes[i];
 
@@ -828,7 +829,7 @@ void MyView::DrawShadows(bool drawStatic) {
 		m_shadowProgram[Program::NonInstanced]->BindUniformM4(combined_transform, "combined_transform");
 
 		m_nonInstancedVOs->vao.SetActive();
-		GLuint count = m_nonInstancedMeshes.size();
+		GLuint count = (GLuint)m_nonInstancedMeshes.size();
 		for (GLuint i = 0; i < count; i++) {
 			const Mesh &mesh = m_nonInstancedMeshes[i];
 
@@ -845,7 +846,7 @@ void MyView::DrawShadows(bool drawStatic) {
 		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
 	}
 
-	glViewport(0, 0, view_size.x, view_size.y);
+	glViewport(0, 0, screen_width, screen_height);
 	VertexArrayObject::Reset();
 }
 

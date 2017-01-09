@@ -55,7 +55,8 @@ private:
 #pragma region Members
 	#pragma region General
 		const scene::Context *scene_;
-		glm::vec2 view_size;
+		GLuint screen_width;
+		GLuint screen_height;
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
