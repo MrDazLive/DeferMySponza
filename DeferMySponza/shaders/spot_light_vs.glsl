@@ -10,11 +10,12 @@ struct Light {
 
 layout(location = 0) in vec3 vertex_coord;
 layout(location = 1) in Light light;
+layout(location = 6) in mat4 source_projection;
 
 uniform mat4 combined_transform;
-uniform	mat4 shadowTransform[5];
 
 flat out int fixed_instance;
+flat out mat4 fixed_projection;
 flat out Light fixed_light;
 
 mat4 lookAt(vec3 eye, vec3 center, vec3 up) {
@@ -37,4 +38,5 @@ void main(void) {
 	fixed_light.direction = normalize(light.direction);
 
 	fixed_instance = gl_InstanceID;
+	fixed_projection = source_projection;
 }

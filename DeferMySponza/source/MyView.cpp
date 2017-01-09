@@ -308,6 +308,11 @@ void MyView::PrepareVAOs() {
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
+	m_lightViewVbo->SetActive();
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
 
 	VertexArrayObject::Reset();
 	VertexBufferObject::Reset(GL_ARRAY_BUFFER);
@@ -367,6 +372,8 @@ void MyView::PrepareVBOs() {
 	m_lightVO[Light::Spot]->vertices.BufferData(positions);
 	m_lightVO[Light::Spot]->elements.BufferData(cone->indexArray()[0], cone->indexCount());
 	m_lightVO[Light::Spot]->elementCount = cone->indexCount();
+
+	m_lightViewVbo = std::make_unique<VertexBufferObject>(GL_VERTEX_ARRAY, GL_DYNAMIC_DRAW);
 }
 
 void MyView::PrepareUBOs() {
@@ -493,7 +500,7 @@ void MyView::PreparePrograms() {
 
 	p->AddShader(m_vsLight[Light::Spot].get(), m_fsLight[Light::Spot].get());
 
-	p->AddInAttribute("vertex_coord", "light.position", "light.direction", "light.intensity", "light.range", "light.coneAngle");
+	p->AddInAttribute("vertex_coord", "light.position", "light.direction", "light.intensity", "light.range", "light.coneAngle", "source_projection");
 	p->AddOutAttribute("fragment_colour");
 
 	p->Link();
@@ -777,8 +784,6 @@ void MyView::DrawEnvironment() {
 
 void MyView::DrawShadows(bool drawStatic) {
 	glViewport(0, 0, 1024, 1024);
-	glm::mat4 bias(0.5f);
-	bias[3] += glm::vec4(0.5f);
 
 	for (int i = 0; i < 5; i++) {
 		auto &light = scene_->getAllSpotLights()[i];
@@ -832,12 +837,11 @@ void MyView::DrawShadows(bool drawStatic) {
 
 			glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
 		}
+	}
 
+	m_lightProgram[Light::Spot]->SetActive();
+	for (int i = 0; i < 5; i++) {
 		std::string texture = "shadowMap[" + std::to_string(i) + "]";
-		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
-
-		m_lightProgram[Light::Spot]->SetActive();
-		m_lightProgram[Light::Spot]->BindUniformM4(bias * combined_transform, transform);
 		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
 	}
 
@@ -940,6 +944,9 @@ void MyView::UpdateLights() {
 	m_lightVO[Light::Point]->instances.BufferData(pLights);
 
 	std::vector<SpotLight> sLights;
+	std::vector<glm::mat4> transforms;
+	glm::mat4 bias(0.5f);
+	bias[3] += glm::vec4(0.5f);
 	for (const auto &light : scene_->getAllSpotLights()) {
 		SpotLight s;
 		s.position = (const glm::vec3&)light.getPosition();
@@ -948,8 +955,15 @@ void MyView::UpdateLights() {
 		s.range = light.getRange();
 		s.coneAngle = glm::radians(light.getConeAngleDegrees());
 		sLights.push_back(s);
+
+
+		glm::mat4 depthProjectionMatrix = glm::perspective<float>(s.coneAngle, 1.0f, 1.0f, s.range);
+		glm::mat4 depthViewMatrix = glm::lookAt(s.position, s.position + s.direction, glm::vec3(0, 1, 0));
+
+		transforms.push_back(bias * depthProjectionMatrix * depthViewMatrix);
 	}
 	m_lightVO[Light::Spot]->instances.BufferData(sLights);
+	m_lightViewVbo->BufferData(transforms);
 }
 
 #pragma endregion
