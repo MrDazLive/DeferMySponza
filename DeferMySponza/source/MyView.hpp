@@ -42,11 +42,11 @@ private:
 	struct Mesh;
 	struct Shape;
 	struct Vertex;
+	struct Indirect;
 	struct Instance;
 
-	struct InstanceVOs;
+	struct StaticVOs;
 	struct NonStaticVOs;
-	struct NonInstanceVOs;
 
 	struct DirectionalLight;
 	struct PointLight;
@@ -61,7 +61,7 @@ private:
 		glm::mat4 projection_transform;
 
 		PostProcess m_postMode{ PostProcess::Off };
-		Mode m_renderMode{ Mode::Deferred };
+		Mode m_renderMode{ Mode::Forward };
 	#pragma endregion
 	#pragma region Geometry Objects
 		enum GBuffer {
@@ -79,9 +79,8 @@ private:
 		std::unique_ptr<Texture> m_lBuffer;
 	#pragma endregion
 	#pragma region Vertex Objects
-		std::unique_ptr<InstanceVOs> m_instancedVOs;
+		std::unique_ptr<StaticVOs> m_staticVOs;
 		std::unique_ptr<NonStaticVOs> m_nonStaticVOs;
-		std::unique_ptr<NonInstanceVOs> m_nonInstancedVOs;
 
 		std::unique_ptr<Shape> m_lightVO[3];
 		std::unique_ptr<VertexBufferObject> m_lightViewVbo;
@@ -93,30 +92,22 @@ private:
 		std::unique_ptr<Texture> m_shadowTexture[5];
 	#pragma endregion
 	#pragma region Mesh Instances
-		std::vector<Mesh> m_instancedMeshes;
-		std::vector<Mesh> m_nonStaticMeshes;
-		std::vector<Mesh> m_nonInstancedMeshes;
+		std::unique_ptr<Indirect> m_staticMeshes;
+		std::unique_ptr<Indirect> m_nonStaticMeshes;
 	#pragma endregion
 	#pragma region Shader Programs
-		enum Program {
-			Instanced = 0,
-			NonInstanced = 1
-		};
-
 		std::unique_ptr<ShaderProgram> m_lightProgram[3];
-		std::unique_ptr<ShaderProgram> m_environmentProgram[2];
-		std::unique_ptr<ShaderProgram> m_shadowProgram[2];
+		std::unique_ptr<ShaderProgram> m_environmentProgram;
+		std::unique_ptr<ShaderProgram> m_shadowProgram;
 	#pragma endregion
 	#pragma region Shaders
 		std::unique_ptr<Shader> m_vsLight[3];
 		std::unique_ptr<Shader> m_fsLight[3];
 
 		std::unique_ptr<Shader> m_vsInstancedEnvironment;
-		std::unique_ptr<Shader> m_vsNonInstancedEnvironment;
 		std::unique_ptr<Shader> m_fsEnvironment;
 
 		std::unique_ptr<Shader> m_vsInstancedShadow;
-		std::unique_ptr<Shader> m_vsNonInstancedShadow;
 		std::unique_ptr<Shader> m_fsShadow;
 	#pragma endregion
 	#pragma region Post-Processing
@@ -151,7 +142,7 @@ private:
 	void PreparePrograms();
 	void PrepareMeshData();
 	void PrepareTextures();
-	void PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances);
+	void PrepareVertexData(Indirect &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances);
 #pragma endregion
 #pragma region Render Methods
 	void ForwardRender();

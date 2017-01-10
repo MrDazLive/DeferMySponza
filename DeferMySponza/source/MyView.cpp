@@ -24,14 +24,10 @@
 #pragma region Structs
 
 struct MyView::Mesh {
-	GLuint id;
-
 	GLuint elementCount;
-	GLuint elementIndex;
-
-	GLuint vertexIndex;
-
 	GLuint instanceCount;
+	GLuint elementIndex;
+	GLuint vertexIndex;
 	GLuint instanceIndex;
 };
 
@@ -50,12 +46,18 @@ struct MyView::Vertex {
 	glm::vec2 textureCoordinate;
 };
 
+struct MyView::Indirect {
+	std::vector<GLuint> ids;
+	GLuint count;
+	VertexBufferObject commands{ VertexBufferObject(GL_DRAW_INDIRECT_BUFFER, GL_STATIC_DRAW) };
+};
+
 struct MyView::Instance {
 	glm::mat4 transform;
 	GLint material;
 };
 
-struct MyView::InstanceVOs {
+struct MyView::StaticVOs {
 	VertexArrayObject vao = VertexArrayObject();
 	VertexBufferObject vbo[3] = {
 		VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),	///	Elements
@@ -71,15 +73,6 @@ struct MyView::NonStaticVOs {
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW),			///	Vertices
 		VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW)			///	Instances
 	};
-};
-
-struct MyView::NonInstanceVOs {
-	VertexArrayObject vao = VertexArrayObject();
-	VertexBufferObject vbo[2] = {
-		VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),	///	Elements
-		VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW)				///	Vertices
-	};
-	std::vector<Instance> instances;
 };
 
 struct MyView::DirectionalLight {
@@ -225,9 +218,8 @@ void MyView::TogglePostProcessing() {
 #pragma region Setup Methods
 
 void MyView::PrepareVOs() {
-	m_instancedVOs = std::make_unique<InstanceVOs>();
+	m_staticVOs = std::make_unique<StaticVOs>();
 	m_nonStaticVOs = std::make_unique<NonStaticVOs>();
-	m_nonInstancedVOs = std::make_unique<NonInstanceVOs>();
 
 	m_lightVO[Light::Directional] = std::make_unique<Shape>();
 	m_lightVO[Light::Point] = std::make_unique<Shape>();
@@ -247,19 +239,19 @@ void MyView::PrepareVOs() {
 }
 
 void MyView::PrepareVAOs() {
-	m_instancedVOs->vao.SetActive();
-	m_instancedVOs->vbo[Buffer::Element].SetActive();
-	m_instancedVOs->vbo[Buffer::Vertex].SetActive();
-	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
-	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_instancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
-	m_instancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
-	m_instancedVOs->vbo[Buffer::Instance].SetActive();
-	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
-	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
-	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
-	m_instancedVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
-	m_instancedVOs->vao.AddAttributeDivisor<Instance>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
+	m_staticVOs->vao.SetActive();
+	m_staticVOs->vbo[Buffer::Element].SetActive();
+	m_staticVOs->vbo[Buffer::Vertex].SetActive();
+	m_staticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
+	m_staticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_staticVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_staticVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_staticVOs->vbo[Buffer::Instance].SetActive();
+	m_staticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE);
+	m_staticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
+	m_staticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
+	m_staticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
+	m_staticVOs->vao.AddAttributeDivisor<Instance>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
 
 	m_nonStaticVOs->vao.SetActive();
 	m_nonStaticVOs->vbo[Buffer::Element].SetActive();
@@ -274,14 +266,6 @@ void MyView::PrepareVAOs() {
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 2));
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 3));
 	m_nonStaticVOs->vao.AddAttributeDivisor<Instance>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4) * 4));
-
-	m_nonInstancedVOs->vao.SetActive();
-	m_nonInstancedVOs->vbo[Buffer::Element].SetActive();
-	m_nonInstancedVOs->vbo[Buffer::Vertex].SetActive();
-	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE);
-	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_nonInstancedVOs->vao.AddAttribute<Vertex>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
-	m_nonInstancedVOs->vao.AddAttribute<Vertex>(2, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
 
 	m_lightVO[Light::Directional]->vao.SetActive();
 	m_lightVO[Light::Directional]->vertices.SetActive();
@@ -325,26 +309,18 @@ void MyView::PrepareVBOs() {
 	std::vector<GLuint> elements;
 	std::vector<Instance> instances;
 
-	PrepareVertexData(m_instancedMeshes, vertices, elements, instances);
-	m_instancedVOs->vbo[Buffer::Vertex].BufferData(vertices);
-	m_instancedVOs->vbo[Buffer::Element].BufferData(elements);
-	m_instancedVOs->vbo[Buffer::Instance].BufferData(instances);
+	PrepareVertexData(*m_staticMeshes, vertices, elements, instances);
+	m_staticVOs->vbo[Buffer::Vertex].BufferData(vertices);
+	m_staticVOs->vbo[Buffer::Element].BufferData(elements);
+	m_staticVOs->vbo[Buffer::Instance].BufferData(instances);
 	vertices.clear();
 	elements.clear();
 	instances.clear();
 
-	PrepareVertexData(m_nonStaticMeshes, vertices, elements, instances);
+	PrepareVertexData(*m_nonStaticMeshes, vertices, elements, instances);
 	m_nonStaticVOs->vbo[Buffer::Vertex].BufferData(vertices);
 	m_nonStaticVOs->vbo[Buffer::Element].BufferData(elements);
 	m_nonStaticVOs->vbo[Buffer::Instance].BufferData(instances);
-	vertices.clear();
-	elements.clear();
-	instances.clear();
-
-	PrepareVertexData(m_nonInstancedMeshes, vertices, elements, instances);
-	m_nonInstancedVOs->vbo[Buffer::Vertex].BufferData(vertices);
-	m_nonInstancedVOs->vbo[Buffer::Element].BufferData(elements);
-	m_nonInstancedVOs->instances = instances;
 	vertices.clear();
 	elements.clear();
 	instances.clear();
@@ -393,17 +369,11 @@ void MyView::PrepareShaders() {
 	m_vsInstancedEnvironment = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsInstancedEnvironment->LoadFile("resource:///instanced_environment_vs.glsl");
 
-	m_vsNonInstancedEnvironment = std::make_unique<Shader>(GL_VERTEX_SHADER);
-	m_vsNonInstancedEnvironment->LoadFile("resource:///non_instanced_environment_vs.glsl");
-
 	m_fsEnvironment = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsEnvironment->LoadFile("resource:///environment_fs.glsl");
 
 	m_vsInstancedShadow = std::make_unique<Shader>(GL_VERTEX_SHADER);
 	m_vsInstancedShadow->LoadFile("resource:///instanced_shadow_vs.glsl");
-
-	m_vsNonInstancedShadow = std::make_unique<Shader>(GL_VERTEX_SHADER);
-	m_vsNonInstancedShadow->LoadFile("resource:///non_instanced_shadow_vs.glsl");
 
 	m_fsShadow = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsShadow->LoadFile("resource:///shadow_fs.glsl");
@@ -428,8 +398,8 @@ void MyView::PrepareShaders() {
 }
 
 void MyView::PreparePrograms() {
-	m_environmentProgram[Program::Instanced] = std::make_unique<ShaderProgram>();
-	ShaderProgram *p = m_environmentProgram[Program::Instanced].get();
+	m_environmentProgram = std::make_unique<ShaderProgram>();
+	ShaderProgram *p = m_environmentProgram.get();
 
 	p->AddShader(m_vsInstancedEnvironment.get(), m_fsEnvironment.get());
 
@@ -440,34 +410,12 @@ void MyView::PreparePrograms() {
 
 	p->BindBlock(m_materialUBO.get(), "block_material");
 
-	m_environmentProgram[Program::NonInstanced] = std::make_unique<ShaderProgram>();
-	p = m_environmentProgram[Program::NonInstanced].get();
-
-	p->AddShader(m_vsNonInstancedEnvironment.get(), m_fsEnvironment.get());
-
-	p->AddInAttribute("vertex_position", "vertex_normal", "vertex_tangent", "vertex_texture_coordinate");
-	p->AddOutAttribute("fragment_colour", "fragment_position", "fragment_normal", "fragment_material");
-
-	p->Link();
-
-	p->BindBlock(m_materialUBO.get(), "block_material");
-
-	m_shadowProgram[Program::Instanced] = std::make_unique<ShaderProgram>();
-	p = m_shadowProgram[Program::Instanced].get();
+	m_shadowProgram = std::make_unique<ShaderProgram>();
+	p = m_shadowProgram.get();
 
 	p->AddShader(m_vsInstancedShadow.get(), m_fsShadow.get());
 
 	p->AddInAttribute("vertex_position", "model");
-	p->AddOutAttribute("fragment_depth");
-
-	p->Link();
-
-	m_shadowProgram[Program::NonInstanced] = std::make_unique<ShaderProgram>();
-	p = m_shadowProgram[Program::NonInstanced].get();
-
-	p->AddShader(m_vsNonInstancedShadow.get(), m_fsShadow.get());
-
-	p->AddInAttribute("vertex_position");
 	p->AddOutAttribute("fragment_depth");
 
 	p->Link();
@@ -513,23 +461,22 @@ void MyView::PrepareMeshData() {
 	scene::GeometryBuilder builder;
 	const auto &meshes = builder.getAllMeshes();
 
-	for (const auto &mesh : meshes) {
-		Mesh m;
-		m.id = mesh.getId();
-		GLboolean isStatic = true;
-		GLboolean instance = scene_->getInstancesByMeshId(m.id).size() > 1;
+	m_staticMeshes = std::make_unique<Indirect>();
+	m_nonStaticMeshes = std::make_unique<Indirect>();
 
-		for (const GLuint index : scene_->getInstancesByMeshId(m.id)) {
+	for (const auto &mesh : meshes) {
+		GLuint id = mesh.getId();
+		GLboolean isStatic = true;
+
+		for (const GLuint index : scene_->getInstancesByMeshId(id)) {
 			if (!scene_->getInstanceById(index).isStatic()) {
 				isStatic = false;
 			}
 		}
 
 		isStatic ?
-			instance ?
-				m_instancedMeshes.push_back(m):
-				m_nonInstancedMeshes.push_back(m):
-			m_nonStaticMeshes.push_back(m);
+			m_staticMeshes->ids.push_back(id):
+			m_nonStaticMeshes->ids.push_back(id);
 	}
 }
 
@@ -549,19 +496,16 @@ void MyView::PrepareTextures() {
 		}
 	}
 
-	ShaderProgram *ptrs[2] = { m_environmentProgram[Program::Instanced].get(), m_environmentProgram[Program::NonInstanced].get() };
-	for (ShaderProgram *ptr : ptrs) {
-		ptr->SetActive();
-		for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
-			if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
-				break;
+	m_environmentProgram->SetActive();
+	for (unsigned int i = 0, j = 0; i < 7; i++, j++) {
+		if (m_mainTexture[i] == nullptr || m_normalTexture[i] == nullptr)
+			break;
 
-			std::string main = "mainTexture[" + std::to_string(i) + "]";
-			std::string normal = "normalTexture[" + std::to_string(i) + "]";
+		std::string main = "mainTexture[" + std::to_string(i) + "]";
+		std::string normal = "normalTexture[" + std::to_string(i) + "]";
 
-			ptr->BindUniformTexture(m_mainTexture[i].get(), main, (i * 2));
-			ptr->BindUniformTexture(m_normalTexture[i].get(), normal, (i * 2) + 1);
-		}
+		m_environmentProgram->BindUniformTexture(m_mainTexture[i].get(), main, (i * 2));
+		m_environmentProgram->BindUniformTexture(m_normalTexture[i].get(), normal, (i * 2) + 1);
 	}
 
 	m_lightProgram[Light::Spot]->SetActive();
@@ -617,10 +561,12 @@ void MyView::PrepareGBs() {
 	m_sFbo = std::make_unique<FrameBufferObject>();
 }
 
-void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
+void MyView::PrepareVertexData(Indirect &indirect, std::vector<Vertex> &vertices, std::vector<GLuint> &elements, std::vector<Instance> &instances) {
 	scene::GeometryBuilder builder;
-	for (Mesh &m : meshData) {
-		const auto &mesh = builder.getMeshById(m.id);
+	std::vector<Mesh> commands;
+	for (GLuint &id : indirect.ids) {
+		const auto &mesh = builder.getMeshById(id);
+		Mesh m;
 
 		m.vertexIndex = (GLuint)vertices.size();
 		m.elementIndex = (GLuint)elements.size();
@@ -658,7 +604,7 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 			}
 		}
 
-		const auto &meshInstances = scene_->getInstancesByMeshId(m.id);
+		const auto &meshInstances = scene_->getInstancesByMeshId(id);
 		for (const auto &instanceID : meshInstances) {
 			const auto &instance = scene_->getInstanceById(instanceID);
 			Instance i;
@@ -667,7 +613,10 @@ void MyView::PrepareVertexData(std::vector<Mesh> &meshData, std::vector<Vertex> 
 			instances.push_back(i);
 		}
 		m.instanceCount = (GLuint)meshInstances.size();
+		commands.push_back(m);
 	}
+	indirect.commands.BufferData(commands);
+	indirect.count = commands.size();
 }
 
 #pragma endregion
@@ -746,39 +695,18 @@ void MyView::PostProcessRender() {
 void MyView::DrawEnvironment() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
-	m_environmentProgram[Program::Instanced]->SetActive();
-	m_environmentProgram[Program::Instanced]->BindUniformM4(combined_transform, "combined_transform");
-	m_environmentProgram[Program::Instanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
+	m_environmentProgram->SetActive();
+	m_environmentProgram->BindUniformM4(combined_transform, "combined_transform");
+	m_environmentProgram->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
 
-	m_instancedVOs->vao.SetActive();
-	for (const Mesh& mesh : m_instancedMeshes) {
-		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
-	}
+	m_staticVOs->vao.SetActive();
+	m_staticMeshes->commands.SetActive();
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, m_staticMeshes->count, sizeof(Mesh));
 
 	UpdateNonStaticTransforms();
 	m_nonStaticVOs->vao.SetActive();
-	for (const Mesh& mesh : m_nonStaticMeshes) {
-		glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
-	}
-
-	m_environmentProgram[Program::NonInstanced]->SetActive();
-	m_environmentProgram[Program::NonInstanced]->BindUniformM4(combined_transform, "combined_transform");
-	m_environmentProgram[Program::NonInstanced]->BindUniformV3(scene_->getAmbientLightIntensity(), "ambience");
-
-	m_nonInstancedVOs->vao.SetActive();
-	GLuint count = (GLuint)m_nonInstancedMeshes.size();
-	for (GLuint i = 0; i < count; i++) {
-		const Mesh &mesh = m_nonInstancedMeshes[i];
-
-		GLuint model_material = m_nonInstancedVOs->instances[i].material;
-		GLint id = glGetUniformLocation(m_environmentProgram[Program::NonInstanced]->getID(), "model.material");
-		glUniform1i(id, model_material);
-
-		glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
-		m_environmentProgram[Program::NonInstanced]->BindUniformM4(model_transform, "model.transform");
-
-		glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
-	}
+	m_nonStaticMeshes->commands.SetActive();
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, m_nonStaticMeshes->count, sizeof(Mesh));
 
 	VertexArrayObject::Reset();
 }
@@ -811,33 +739,17 @@ void MyView::DrawShadows(bool drawStatic) {
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		m_shadowProgram[Program::Instanced]->SetActive();
-		m_shadowProgram[Program::Instanced]->BindUniformM4(combined_transform, "combined_transform");
+		m_shadowProgram->SetActive();
+		m_shadowProgram->BindUniformM4(combined_transform, "combined_transform");
 
-		m_instancedVOs->vao.SetActive();
-		for (const Mesh& mesh : m_instancedMeshes) {
-			glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
-		}
+		m_staticVOs->vao.SetActive();
+		m_staticMeshes->commands.SetActive();
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, m_staticMeshes->count, sizeof(Mesh));
 
 		UpdateNonStaticTransforms();
 		m_nonStaticVOs->vao.SetActive();
-		for (const Mesh& mesh : m_nonStaticMeshes) {
-			glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.instanceCount, mesh.vertexIndex, mesh.instanceIndex);
-		}
-
-		m_shadowProgram[Program::NonInstanced]->SetActive();
-		m_shadowProgram[Program::NonInstanced]->BindUniformM4(combined_transform, "combined_transform");
-
-		m_nonInstancedVOs->vao.SetActive();
-		GLuint count = (GLuint)m_nonInstancedMeshes.size();
-		for (GLuint i = 0; i < count; i++) {
-			const Mesh &mesh = m_nonInstancedMeshes[i];
-
-			glm::mat4 model_transform = m_nonInstancedVOs->instances[i].transform;
-			m_shadowProgram[Program::NonInstanced]->BindUniformM4(model_transform, "model.transform");
-
-			glDrawElementsBaseVertex(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLintptr*)(mesh.elementIndex * sizeof(GLuint)), mesh.vertexIndex);
-		}
+		m_nonStaticMeshes->commands.SetActive();
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, m_nonStaticMeshes->count, sizeof(Mesh));
 	}
 
 	m_lightProgram[Light::Spot]->SetActive();
@@ -912,8 +824,8 @@ void MyView::UpdateViewTransform() {
 
 void MyView::UpdateNonStaticTransforms() {
 	std::vector<Instance> instances;
-	for (const Mesh &mesh : m_nonStaticMeshes) {
-		for (const GLuint &id : scene_->getInstancesByMeshId(mesh.id)) {
+	for (const GLuint &meshID : m_nonStaticMeshes->ids) {
+		for (const GLuint &id : scene_->getInstancesByMeshId(meshID)) {
 			const auto &instance = scene_->getInstanceById(id);
 			Instance i;
 			i.transform = (const glm::mat4x3&)instance.getTransformationMatrix();
