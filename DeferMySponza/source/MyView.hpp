@@ -55,8 +55,8 @@ private:
 #pragma region Members
 	#pragma region General
 		const scene::Context *scene_;
-		GLuint screen_width;
-		GLuint screen_height;
+		GLuint screen_width{ 1080 };
+		GLuint screen_height{ 720 };
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
