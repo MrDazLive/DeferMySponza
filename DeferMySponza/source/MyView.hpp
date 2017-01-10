@@ -61,7 +61,7 @@ private:
 		glm::mat4 projection_transform;
 
 		PostProcess m_postMode{ PostProcess::Off };
-		Mode m_renderMode{ Mode::Forward };
+		Mode m_renderMode{ Mode::Deferred };
 	#pragma endregion
 	#pragma region Geometry Objects
 		enum GBuffer {

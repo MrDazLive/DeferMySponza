@@ -350,7 +350,7 @@ void MyView::PrepareVBOs() {
 	m_lightVO[Light::Spot]->elements.BufferData(cone->indexArray()[0], cone->indexCount());
 	m_lightVO[Light::Spot]->elementCount = cone->indexCount();
 
-	m_lightViewVbo = std::make_unique<VertexBufferObject>(GL_VERTEX_ARRAY, GL_DYNAMIC_DRAW);
+	m_lightViewVbo = std::make_unique<VertexBufferObject>(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 }
 
 void MyView::PrepareUBOs() {
