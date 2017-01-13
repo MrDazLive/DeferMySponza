@@ -103,7 +103,7 @@ void main(void) {
 
 	vec4 ShadowPos = fixed_projection * vec4(WorldPosition, 1);
 	vec3 Shadow = ShadowPos.xyz / ShadowPos.w;
-	float vis = (texture(shadowMap[fixed_instance], Shadow.xy).r < Shadow.z) ? -1.0f : 1.0f;
+	float vis = (texture(shadowMap[fixed_instance], Shadow.xy * 1024).r < Shadow.z - 0.01f) ? 0.0f : 1.0f;
 
 	fragment_colour = getSpot(fixed_light) * vis;
 }
