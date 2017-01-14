@@ -35,9 +35,9 @@ struct MyView::Shape {
 	VertexArrayObject vao = VertexArrayObject();
 	VertexBufferObject elements = VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	VertexBufferObject vertices = VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
-	GLuint instanceCount;
-	GLuint instanceIndex;
+	VertexBufferObject instances = VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 	GLuint elementCount;
+	GLuint instanceCount;
 };
 
 struct MyView::Vertex {
@@ -260,7 +260,7 @@ void MyView::PrepareVAOs() {
 	m_lightVO[Light::Directional]->vao.SetActive();
 	m_lightVO[Light::Directional]->vertices.SetActive();
 	m_lightVO[Light::Directional]->vao.AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
-	m_lightInstancesVbo->SetActive();
+	m_lightVO[Light::Directional]->instances.SetActive();
 	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE);
 	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
@@ -271,7 +271,7 @@ void MyView::PrepareVAOs() {
 	m_lightVO[Light::Point]->elements.SetActive();
 	m_lightVO[Light::Point]->vertices.SetActive();
 	m_lightVO[Light::Point]->vao.AddAttribute<glm::vec3>(3, GL_FLOAT, GL_FALSE);
-	m_lightInstancesVbo->SetActive();
+	m_lightVO[Light::Point]->instances.SetActive();
 	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE);
 	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
@@ -282,7 +282,7 @@ void MyView::PrepareVAOs() {
 	m_lightVO[Light::Spot]->elements.SetActive();
 	m_lightVO[Light::Spot]->vertices.SetActive();
 	m_lightVO[Light::Spot]->vao.AddAttribute<glm::vec3>(3, GL_FLOAT, GL_FALSE);
-	m_lightInstancesVbo->SetActive();
+	m_lightVO[Light::Spot]->instances.SetActive();
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE);
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
@@ -345,7 +345,6 @@ void MyView::PrepareVBOs() {
 	m_lightVO[Light::Spot]->elements.BufferData(cone->indexArray()[0], cone->indexCount());
 	m_lightVO[Light::Spot]->elementCount = cone->indexCount();
 
-	m_lightInstancesVbo = std::make_unique<VertexBufferObject>(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 	m_lightViewVbo = std::make_unique<VertexBufferObject>(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 }
 
@@ -745,12 +744,12 @@ void MyView::DrawLights() {
 	m_lightVO[Light::Point]->vao.SetActive();
 	m_lightProgram->BindSubroutine(GL_VERTEX_SHADER, "Point");
 	m_lightProgram->BindSubroutine(GL_FRAGMENT_SHADER, "Point");
-	glDrawElementsInstancedBaseInstance(GL_TRIANGLES, m_lightVO[Light::Point]->elementCount, GL_UNSIGNED_INT, 0, m_lightVO[Light::Point]->instanceCount, m_lightVO[Light::Point]->instanceIndex);
+	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Point]->elementCount, GL_UNSIGNED_INT, 0, m_lightVO[Light::Point]->instanceCount);
 
 	m_lightVO[Light::Spot]->vao.SetActive();
 	m_lightProgram->BindSubroutine(GL_VERTEX_SHADER, "Spot");
 	m_lightProgram->BindSubroutine(GL_FRAGMENT_SHADER, "Spot");
-	glDrawElementsInstancedBaseInstance(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, m_lightVO[Light::Spot]->instanceCount, m_lightVO[Light::Spot]->instanceIndex);
+	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, m_lightVO[Light::Spot]->instanceCount);
 
 	glCullFace(GL_BACK);
 	glDepthFunc(GL_LEQUAL);
@@ -783,28 +782,28 @@ void MyView::UpdateNonStaticTransforms() {
 }
 
 void MyView::UpdateLights() {
-	std::vector<LightObject> lights;
-	m_lightVO[Light::Directional]->instanceIndex = lights.size();
-	m_lightVO[Light::Directional]->instanceCount = scene_->getAllDirectionalLights().size();
+	std::vector<LightObject> dLights;
 	for (const auto &light : scene_->getAllDirectionalLights()) {
 		LightObject d;
 		d.direction = (const glm::vec3&)light.getDirection();
 		d.intensity = (const glm::vec3&)light.getIntensity();
-		lights.push_back(d);
+		dLights.push_back(d);
 	}
+	m_lightVO[Light::Directional]->instances.BufferData(dLights);
+	m_lightVO[Light::Directional]->instanceCount = dLights.size();
 
-	m_lightVO[Light::Point]->instanceIndex = lights.size();
-	m_lightVO[Light::Point]->instanceCount = scene_->getAllPointLights().size();
+	std::vector<LightObject> pLights;
 	for (const auto &light : scene_->getAllPointLights()) {
 		LightObject p;
 		p.position = (const glm::vec3&)light.getPosition();
 		p.intensity = (const glm::vec3&)light.getIntensity();
 		p.range = light.getRange();
-		lights.push_back(p);
+		pLights.push_back(p);
 	}
+	m_lightVO[Light::Point]->instances.BufferData(pLights);
+	m_lightVO[Light::Point]->instanceCount = pLights.size();
 
-	m_lightVO[Light::Spot]->instanceIndex = lights.size();
-	m_lightVO[Light::Spot]->instanceCount = scene_->getAllSpotLights().size();
+	std::vector<LightObject> sLights;
 	std::vector<glm::mat4> transforms;
 	glm::mat4 bias(0.5f);
 	bias[3] += glm::vec4(0.5f);
@@ -815,7 +814,7 @@ void MyView::UpdateLights() {
 		s.intensity = (const glm::vec3&)light.getIntensity();
 		s.range = light.getRange();
 		s.coneAngle = glm::radians(light.getConeAngleDegrees());
-		lights.push_back(s);
+		sLights.push_back(s);
 
 
 		glm::mat4 depthProjectionMatrix = glm::perspective<float>(s.coneAngle, 1.0f, 1.0f, s.range);
@@ -823,7 +822,8 @@ void MyView::UpdateLights() {
 
 		transforms.push_back(bias * depthProjectionMatrix * depthViewMatrix);
 	}
-	m_lightInstancesVbo->BufferData(lights);
+	m_lightVO[Light::Spot]->instances.BufferData(sLights);
+	m_lightVO[Light::Spot]->instanceCount = sLights.size();
 	m_lightViewVbo->BufferData(transforms);
 }
 

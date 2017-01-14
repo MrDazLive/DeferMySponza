@@ -80,7 +80,6 @@ private:
 		std::unique_ptr<NonStaticVOs> m_nonStaticVOs;
 
 		std::unique_ptr<Shape> m_lightVO[3];
-		std::unique_ptr<VertexBufferObject> m_lightInstancesVbo;
 		std::unique_ptr<VertexBufferObject> m_lightViewVbo;
 	#pragma endregion
 	#pragma region Materials & Textures
