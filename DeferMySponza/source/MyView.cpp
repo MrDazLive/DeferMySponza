@@ -35,7 +35,8 @@ struct MyView::Shape {
 	VertexArrayObject vao = VertexArrayObject();
 	VertexBufferObject elements = VertexBufferObject(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	VertexBufferObject vertices = VertexBufferObject(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
-	VertexBufferObject instances = VertexBufferObject(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
+	GLuint instanceCount;
+	GLuint instanceIndex;
 	GLuint elementCount;
 };
 
@@ -75,18 +76,7 @@ struct MyView::NonStaticVOs {
 	};
 };
 
-struct MyView::DirectionalLight {
-	glm::vec3 direction;
-	glm::vec3 intensity;
-};
-
-struct MyView::PointLight {
-	glm::vec3 position;
-	glm::vec3 intensity;
-	float range;
-};
-
-struct MyView::SpotLight {
+struct MyView::LightObject {
 	glm::vec3 position;
 	glm::vec3 direction;
 	glm::vec3 intensity;
@@ -270,29 +260,34 @@ void MyView::PrepareVAOs() {
 	m_lightVO[Light::Directional]->vao.SetActive();
 	m_lightVO[Light::Directional]->vertices.SetActive();
 	m_lightVO[Light::Directional]->vao.AddAttribute<glm::vec2>(2, GL_FLOAT, GL_FALSE);
-	m_lightVO[Light::Directional]->instances.SetActive();
-	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<DirectionalLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightInstancesVbo->SetActive();
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_lightVO[Light::Directional]->vao.AddAttributeDivisor<LightObject>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
 
 	m_lightVO[Light::Point]->vao.SetActive();
 	m_lightVO[Light::Point]->elements.SetActive();
 	m_lightVO[Light::Point]->vertices.SetActive();
 	m_lightVO[Light::Point]->vao.AddAttribute<glm::vec3>(3, GL_FLOAT, GL_FALSE);
-	m_lightVO[Light::Point]->instances.SetActive();
-	m_lightVO[Light::Point]->vao.AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVO[Light::Point]->vao.AddAttributeDivisor<PointLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_lightVO[Light::Point]->vao.AddAttributeDivisor<PointLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightInstancesVbo->SetActive();
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_lightVO[Light::Point]->vao.AddAttributeDivisor<LightObject>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
 
 	m_lightVO[Light::Spot]->vao.SetActive();
 	m_lightVO[Light::Spot]->elements.SetActive();
 	m_lightVO[Light::Spot]->vertices.SetActive();
 	m_lightVO[Light::Spot]->vao.AddAttribute<glm::vec3>(3, GL_FLOAT, GL_FALSE);
-	m_lightVO[Light::Spot]->instances.SetActive();
-	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE);
-	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
-	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
-	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
-	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<SpotLight>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
+	m_lightInstancesVbo->SetActive();
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE);
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3)));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(3, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 2));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(1, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec3) * 3));
+	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<LightObject>(1, GL_FLOAT, GL_FALSE, (int*)((sizeof(glm::vec3) * 3) + sizeof(float)));
 	m_lightViewVbo->SetActive();
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE);
 	m_lightVO[Light::Spot]->vao.AddAttributeDivisor<glm::mat4>(4, GL_FLOAT, GL_FALSE, (int*)(sizeof(glm::vec4)));
@@ -350,6 +345,7 @@ void MyView::PrepareVBOs() {
 	m_lightVO[Light::Spot]->elements.BufferData(cone->indexArray()[0], cone->indexCount());
 	m_lightVO[Light::Spot]->elementCount = cone->indexCount();
 
+	m_lightInstancesVbo = std::make_unique<VertexBufferObject>(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 	m_lightViewVbo = std::make_unique<VertexBufferObject>(GL_ARRAY_BUFFER, GL_DYNAMIC_DRAW);
 }
 
@@ -378,23 +374,11 @@ void MyView::PrepareShaders() {
 	m_fsShadow = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
 	m_fsShadow->LoadFile("resource:///shadow_fs.glsl");
 
-	m_vsLight[Light::Directional] = std::make_unique<Shader>(GL_VERTEX_SHADER);
-	m_vsLight[Light::Directional]->LoadFile("resource:///directional_light_vs.glsl");
+	m_vsLight = std::make_unique<Shader>(GL_VERTEX_SHADER);
+	m_vsLight->LoadFile("resource:///light_vs.glsl");
 
-	m_vsLight[Light::Point] = std::make_unique<Shader>(GL_VERTEX_SHADER);
-	m_vsLight[Light::Point]->LoadFile("resource:///point_light_vs.glsl");
-
-	m_vsLight[Light::Spot] = std::make_unique<Shader>(GL_VERTEX_SHADER);
-	m_vsLight[Light::Spot]->LoadFile("resource:///spot_light_vs.glsl");
-
-	m_fsLight[Light::Directional] = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
-	m_fsLight[Light::Directional]->LoadFile("resource:///directional_light_fs.glsl");
-
-	m_fsLight[Light::Point] = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
-	m_fsLight[Light::Point]->LoadFile("resource:///point_light_fs.glsl");
-
-	m_fsLight[Light::Spot] = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
-	m_fsLight[Light::Spot]->LoadFile("resource:///spot_light_fs.glsl");
+	m_fsLight = std::make_unique<Shader>(GL_FRAGMENT_SHADER);
+	m_fsLight->LoadFile("resource:///light_fs.glsl");
 }
 
 void MyView::PreparePrograms() {
@@ -420,34 +404,10 @@ void MyView::PreparePrograms() {
 
 	p->Link();
 
-	m_lightProgram[Light::Directional] = std::make_unique<ShaderProgram>();
-	p = m_lightProgram[Light::Directional].get();
+	m_lightProgram = std::make_unique<ShaderProgram>();
+	p = m_lightProgram.get();
 
-	p->AddShader(m_vsLight[Light::Directional].get(), m_fsLight[Light::Directional].get());
-
-	p->AddInAttribute("vertex_coord", "light.direction", "light.intensity");
-	p->AddOutAttribute("fragment_colour");
-
-	p->Link();
-
-	p->BindBlock(m_materialUBO.get(), "block_material");
-
-	m_lightProgram[Light::Point] = std::make_unique<ShaderProgram>();
-	p = m_lightProgram[Light::Point].get();
-
-	p->AddShader(m_vsLight[Light::Point].get(), m_fsLight[Light::Point].get());
-
-	p->AddInAttribute("vertex_coord", "light.position", "light.intensity", "light.range");
-	p->AddOutAttribute("fragment_colour");
-
-	p->Link();
-
-	p->BindBlock(m_materialUBO.get(), "block_material");
-
-	m_lightProgram[Light::Spot] = std::make_unique<ShaderProgram>();
-	p = m_lightProgram[Light::Spot].get();
-
-	p->AddShader(m_vsLight[Light::Spot].get(), m_fsLight[Light::Spot].get());
+	p->AddShader(m_vsLight.get(), m_fsLight.get());
 
 	p->AddInAttribute("vertex_coord", "light.position", "light.direction", "light.intensity", "light.range", "light.coneAngle", "source_projection");
 	p->AddOutAttribute("fragment_colour");
@@ -508,7 +468,7 @@ void MyView::PrepareTextures() {
 		m_environmentProgram->BindUniformTexture(m_normalTexture[i].get(), normal, (i * 2) + 1);
 	}
 
-	m_lightProgram[Light::Spot]->SetActive();
+	m_lightProgram->SetActive();
 	for (int i = 0; i < 5; i++) {
 		m_shadowTexture[i] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
 		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT);
@@ -521,8 +481,8 @@ void MyView::PrepareTextures() {
 		std::string texture = "shadowMap[" + std::to_string(i) + "]";
 		std::string transform = "shadowTransform[" + std::to_string(i) + "]";
 
-		m_lightProgram[Light::Spot]->BindUniformM4(glm::mat4(0), transform);
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
+		m_lightProgram->BindUniformM4(glm::mat4(0), transform);
+		m_lightProgram->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
 	}
 }
 
@@ -752,10 +712,10 @@ void MyView::DrawShadows(bool drawStatic) {
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, m_nonStaticMeshes->count, sizeof(Mesh));
 	}
 
-	m_lightProgram[Light::Spot]->SetActive();
+	m_lightProgram->SetActive();
 	for (int i = 0; i < 5; i++) {
 		std::string texture = "shadowMap[" + std::to_string(i) + "]";
-		m_lightProgram[Light::Spot]->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
+		m_lightProgram->BindUniformTexture(m_shadowTexture[i].get(), texture, i + 4);
 	}
 
 	glViewport(0, 0, screen_width, screen_height);
@@ -765,46 +725,32 @@ void MyView::DrawShadows(bool drawStatic) {
 void MyView::DrawLights() {
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
-	m_lightProgram[Light::Directional]->SetActive();
+	m_lightProgram->SetActive();
+	m_lightProgram->BindUniformM4(combined_transform, "combined_transform");
+	m_lightProgram->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
+	m_lightProgram->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
+	m_lightProgram->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
+
 	m_lightVO[Light::Directional]->vao.SetActive();
-
-	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
-	m_lightProgram[Light::Directional]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
-	m_lightProgram[Light::Directional]->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
-
-	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, 2);
+	m_lightProgram->BindSubroutine(GL_VERTEX_SHADER, "Directional");
+	m_lightProgram->BindSubroutine(GL_FRAGMENT_SHADER, "Directional");
+	glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, 4, m_lightVO[Light::Directional]->instanceCount);
 
 	glCullFace(GL_FRONT);
 	glDepthFunc(GL_GEQUAL);
 
-	m_lightProgram[Light::Point]->SetActive();
 	m_lightVO[Light::Point]->vao.SetActive();
+	m_lightProgram->BindSubroutine(GL_VERTEX_SHADER, "Point");
+	m_lightProgram->BindSubroutine(GL_FRAGMENT_SHADER, "Point");
+	glDrawElementsInstancedBaseInstance(GL_TRIANGLES, m_lightVO[Light::Point]->elementCount, GL_UNSIGNED_INT, 0, m_lightVO[Light::Point]->instanceCount, m_lightVO[Light::Point]->instanceIndex);
 
-	m_lightProgram[Light::Point]->BindUniformM4(combined_transform, "combined_transform");
-	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
-	m_lightProgram[Light::Point]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
-	m_lightProgram[Light::Point]->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
-
-	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Point]->elementCount, GL_UNSIGNED_INT, 0, 20);
-
-	m_lightProgram[Light::Spot]->SetActive();
 	m_lightVO[Light::Spot]->vao.SetActive();
-
-	m_lightProgram[Light::Spot]->BindUniformM4(combined_transform, "combined_transform");
-	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getPosition(), "eyePosition");
-	m_lightProgram[Light::Spot]->BindUniformV3(scene_->getCamera().getDirection(), "eyeDirection");
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Colour].get(), "colourMap");
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Position].get(), "positionMap", 1);
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Normal].get(), "normalMap", 2);
-	m_lightProgram[Light::Spot]->BindUniformTexture(m_gBuffer[GBuffer::Material].get(), "materialMap", 3);
-
-	glDrawElementsInstanced(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, 5);
+	m_lightProgram->BindSubroutine(GL_VERTEX_SHADER, "Spot");
+	m_lightProgram->BindSubroutine(GL_FRAGMENT_SHADER, "Spot");
+	glDrawElementsInstancedBaseInstance(GL_TRIANGLES, m_lightVO[Light::Spot]->elementCount, GL_UNSIGNED_INT, 0, m_lightVO[Light::Spot]->instanceCount, m_lightVO[Light::Spot]->instanceIndex);
 
 	glCullFace(GL_BACK);
 	glDepthFunc(GL_LEQUAL);
@@ -837,37 +783,39 @@ void MyView::UpdateNonStaticTransforms() {
 }
 
 void MyView::UpdateLights() {
-	std::vector<DirectionalLight> dLights;
+	std::vector<LightObject> lights;
+	m_lightVO[Light::Directional]->instanceIndex = lights.size();
+	m_lightVO[Light::Directional]->instanceCount = scene_->getAllDirectionalLights().size();
 	for (const auto &light : scene_->getAllDirectionalLights()) {
-		DirectionalLight d;
+		LightObject d;
 		d.direction = (const glm::vec3&)light.getDirection();
 		d.intensity = (const glm::vec3&)light.getIntensity();
-		dLights.push_back(d);
+		lights.push_back(d);
 	}
-	m_lightVO[Light::Directional]->instances.BufferData(dLights);
 
-	std::vector<PointLight> pLights;
+	m_lightVO[Light::Point]->instanceIndex = lights.size();
+	m_lightVO[Light::Point]->instanceCount = scene_->getAllPointLights().size();
 	for (const auto &light : scene_->getAllPointLights()) {
-		PointLight p;
+		LightObject p;
 		p.position = (const glm::vec3&)light.getPosition();
 		p.intensity = (const glm::vec3&)light.getIntensity();
 		p.range = light.getRange();
-		pLights.push_back(p);
+		lights.push_back(p);
 	}
-	m_lightVO[Light::Point]->instances.BufferData(pLights);
 
-	std::vector<SpotLight> sLights;
+	m_lightVO[Light::Spot]->instanceIndex = lights.size();
+	m_lightVO[Light::Spot]->instanceCount = scene_->getAllSpotLights().size();
 	std::vector<glm::mat4> transforms;
 	glm::mat4 bias(0.5f);
 	bias[3] += glm::vec4(0.5f);
 	for (const auto &light : scene_->getAllSpotLights()) {
-		SpotLight s;
+		LightObject s;
 		s.position = (const glm::vec3&)light.getPosition();
 		s.direction = (const glm::vec3&)light.getDirection();
 		s.intensity = (const glm::vec3&)light.getIntensity();
 		s.range = light.getRange();
 		s.coneAngle = glm::radians(light.getConeAngleDegrees());
-		sLights.push_back(s);
+		lights.push_back(s);
 
 
 		glm::mat4 depthProjectionMatrix = glm::perspective<float>(s.coneAngle, 1.0f, 1.0f, s.range);
@@ -875,7 +823,7 @@ void MyView::UpdateLights() {
 
 		transforms.push_back(bias * depthProjectionMatrix * depthViewMatrix);
 	}
-	m_lightVO[Light::Spot]->instances.BufferData(sLights);
+	m_lightInstancesVbo->BufferData(lights);
 	m_lightViewVbo->BufferData(transforms);
 }
 

@@ -1,4 +1,4 @@
-#version 330
+#version 400
 
 struct Material {
 	vec3 diffuse;
@@ -12,7 +12,7 @@ struct Material {
 	int excess2;
 };
 
-layout (std140) uniform block_material {
+layout(std140) uniform block_material{
 	Material material[7];
 };
 
@@ -34,6 +34,9 @@ uniform sampler2DRect materialMap;
 
 uniform	sampler2DRect shadowMap[5];
 
+subroutine vec3 LightType(Light l);
+subroutine uniform LightType lightSelection;
+
 flat in int fixed_instance;
 flat in	mat4 fixed_projection;
 flat in Light fixed_light;
@@ -46,8 +49,8 @@ vec3 Normal;
 vec2 TextureCoordinate;
 int MaterialID;
 
-void getShine(inout float specular) { 
-	vec3 H = normalize(fixed_light.direction + eyeDirection);
+void getShine(vec3 lightDirection, inout float specular) {
+	vec3 H = normalize(lightDirection + eyeDirection);
 	float VH = max(dot(eyeDirection, H), 0);
 
 	float shine = pow(1 - VH, 5);
@@ -63,13 +66,13 @@ void getMetallic(inout float diffuse, inout float specular) {
 
 vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 	float diffuse = clamp(dot(Normal, lightDirection), 0, 1);
-	if(diffuse > 0) {
+	if (diffuse > 0) {
 		vec3 dir = normalize(eyePosition - WorldPosition);
 		vec3 ref = normalize(reflect(lightDirection, Normal));
-		
+
 		float specular = max(dot(dir, ref), 0);
-		
-		getShine(specular);
+
+		getShine(lightDirection, specular);
 		getMetallic(diffuse, specular);
 
 		return vec3(diffuse + specular) * Colour * lightIntensity;
@@ -77,7 +80,21 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 	return vec3(0);
 }
 
-vec3 getSpot(Light l) {
+subroutine(LightType) vec3 Directional(Light l) {
+	return getInternal(l.direction, l.intensity);
+}
+
+subroutine(LightType) vec3 Point(Light l) {
+	vec3 dir = l.position - WorldPosition;
+	float dis = length(dir);
+	dir = normalize(dir);
+
+	float att = l.range * l.range / (dis * dis * dis);
+
+	return att * getInternal(dir, l.intensity);
+}
+
+subroutine(LightType) vec3 Spot(Light l) {
 	vec3 dir = l.position - WorldPosition;
 	float dis = length(dir);
 	dir = normalize(dir);
@@ -85,25 +102,25 @@ vec3 getSpot(Light l) {
 	float fac = dot(l.direction, -dir);
 	float ang = cos(l.coneAngle / 2);
 
-	if(fac > ang) {
+	if (fac > ang) {
 		float dAtt = l.range * l.range / (dis * dis * dis);
 		float cAtt = 1 - ((1 - fac) / (1 - ang));
 
-		return dAtt * cAtt * getInternal(dir, l.intensity);
+		vec4 ShadowPos = fixed_projection * vec4(WorldPosition, 1);
+		vec3 Shadow = ShadowPos.xyz / ShadowPos.w;
+		float vis = (texture(shadowMap[fixed_instance], Shadow.xy * 1024).r < Shadow.z - 0.01f) ? 0.0f : 1.0f;
+
+		return dAtt * cAtt * getInternal(dir, l.intensity) * vis;
 	}
 	return vec3(0);
 }
 
 void main(void) {
-   	Colour = texture(colourMap, gl_FragCoord.xy).xyz;
-   	WorldPosition = texture(positionMap, gl_FragCoord.xy).xyz;
-   	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
+	Colour = texture(colourMap, gl_FragCoord.xy).xyz;
+	WorldPosition = texture(positionMap, gl_FragCoord.xy).xyz;
+	Normal = texture(normalMap, gl_FragCoord.xy).xyz;
 	TextureCoordinate = texture(materialMap, gl_FragCoord.xy).xy;
 	MaterialID = int(texture(materialMap, gl_FragCoord.xy).z);
 
-	vec4 ShadowPos = fixed_projection * vec4(WorldPosition, 1);
-	vec3 Shadow = ShadowPos.xyz / ShadowPos.w;
-	float vis = (texture(shadowMap[fixed_instance], Shadow.xy * 1024).r < Shadow.z - 0.01f) ? 0.0f : 1.0f;
-
-	fragment_colour = getSpot(fixed_light) * vis;
+	fragment_colour = lightSelection(fixed_light);
 }

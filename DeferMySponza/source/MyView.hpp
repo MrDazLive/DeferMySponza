@@ -34,7 +34,6 @@ public:
 #pragma region Additional Methods
 	void LogTimers();
 	void ResetTimers();
-	void ReloadShaders();
 	void TogglePostProcessing();
 #pragma endregion
 private:
@@ -48,9 +47,7 @@ private:
 	struct StaticVOs;
 	struct NonStaticVOs;
 
-	struct DirectionalLight;
-	struct PointLight;
-	struct SpotLight;
+	struct LightObject;
 #pragma endregion
 #pragma region Members
 	#pragma region General
@@ -83,6 +80,7 @@ private:
 		std::unique_ptr<NonStaticVOs> m_nonStaticVOs;
 
 		std::unique_ptr<Shape> m_lightVO[3];
+		std::unique_ptr<VertexBufferObject> m_lightInstancesVbo;
 		std::unique_ptr<VertexBufferObject> m_lightViewVbo;
 	#pragma endregion
 	#pragma region Materials & Textures
@@ -96,13 +94,13 @@ private:
 		std::unique_ptr<Indirect> m_nonStaticMeshes;
 	#pragma endregion
 	#pragma region Shader Programs
-		std::unique_ptr<ShaderProgram> m_lightProgram[3];
+		std::unique_ptr<ShaderProgram> m_lightProgram;
 		std::unique_ptr<ShaderProgram> m_environmentProgram;
 		std::unique_ptr<ShaderProgram> m_shadowProgram;
 	#pragma endregion
 	#pragma region Shaders
-		std::unique_ptr<Shader> m_vsLight[3];
-		std::unique_ptr<Shader> m_fsLight[3];
+		std::unique_ptr<Shader> m_vsLight;
+		std::unique_ptr<Shader> m_fsLight;
 
 		std::unique_ptr<Shader> m_vsInstancedEnvironment;
 		std::unique_ptr<Shader> m_fsEnvironment;

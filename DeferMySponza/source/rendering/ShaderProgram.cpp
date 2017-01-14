@@ -91,6 +91,11 @@ void ShaderProgram::BindBlock(VertexBufferObject *vbo, const std::string name) {
 	VertexBufferObject::Reset(vbo->getTarget());
 }
 
+void ShaderProgram::BindSubroutine(const GLenum shaderType, const std::string name) {
+	GLuint id = glGetSubroutineIndex(this->getID(), shaderType, name.c_str());
+	glUniformSubroutinesuiv(shaderType, 1, &id);
+}
+
 void ShaderProgram::BindUniformTexture(const Texture *texture, const std::string name, const GLuint offset) {
 	glActiveTexture(GL_TEXTURE0 + offset);
 	glBindTexture(texture->getTarget(), texture->getID());

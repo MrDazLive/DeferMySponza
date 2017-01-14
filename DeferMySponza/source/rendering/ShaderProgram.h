@@ -33,6 +33,7 @@ public:
 	void AddInAttribute(const std::string name);
 	void AddOutAttribute(const std::string name);
 	void BindBlock(VertexBufferObject *vbo, const std::string name);
+	void BindSubroutine(const GLenum shaderType, const std::string name);
 	void BindUniformTexture(const Texture *texture, const std::string name, const GLuint offset = 0);
 	template <typename ... T> void AddShader(const Shader *shader, const T... arr);
 	template <typename ... T> void AddInAttribute(const std::string name, const T... arr);

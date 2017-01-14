@@ -1,4 +1,4 @@
-#version 330
+#version 400
 
 struct Light {
 	vec3 position;
@@ -14,6 +14,9 @@ layout(location = 6) in mat4 source_projection;
 
 uniform mat4 combined_transform;
 
+subroutine void LightType();
+subroutine uniform LightType lightSelection;
+
 flat out int fixed_instance;
 flat out mat4 fixed_projection;
 flat out Light fixed_light;
@@ -26,7 +29,18 @@ mat4 lookAt(vec3 eye, vec3 center, vec3 up) {
 	return mat4(vec4(x, 0), vec4(y, 0), vec4(z, 0), vec4(0, 0, 0, 1));
 }
 
-void main(void) {
+subroutine(LightType) void Directional() {
+	gl_Position = vec4(vertex_coord, 1.0);
+}
+
+subroutine(LightType) void Point() {
+	float r = light.range * 5;
+	vec3 pos = light.position;
+	mat4 model = mat4(vec4(r, 0, 0, 0), vec4(0, r, 0, 0), vec4(0, 0, r, 0), vec4(pos, 1));
+	gl_Position = combined_transform * model * vec4(vertex_coord, 1.0);
+}
+
+subroutine(LightType) void Spot() {
 	float rad = tan(light.coneAngle / 2) * light.range;
 	float ran = light.range;
 	vec3 pos = light.position;
@@ -34,6 +48,11 @@ void main(void) {
 	mat4 view = lookAt(vec3(0), -light.direction, vec3(0, 1, 0));
 
 	gl_Position = combined_transform * model * view * vec4(vertex_coord, 1.0);
+}
+
+void main(void) {
+	lightSelection();
+
 	fixed_light = light;
 	fixed_light.direction = normalize(light.direction);
 
