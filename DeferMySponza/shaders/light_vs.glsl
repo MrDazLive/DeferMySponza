@@ -34,7 +34,7 @@ subroutine(LightType) void Directional() {
 }
 
 subroutine(LightType) void Point() {
-	float r = light.range * 5;
+	float r = light.range;
 	vec3 pos = light.position;
 	mat4 model = mat4(vec4(r, 0, 0, 0), vec4(0, r, 0, 0), vec4(0, 0, r, 0), vec4(pos, 1));
 	gl_Position = combined_transform * model * vec4(vertex_coord, 1.0);

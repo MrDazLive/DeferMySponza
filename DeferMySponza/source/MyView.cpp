@@ -816,7 +816,6 @@ void MyView::UpdateLights() {
 		s.coneAngle = glm::radians(light.getConeAngleDegrees());
 		sLights.push_back(s);
 
-
 		glm::mat4 depthProjectionMatrix = glm::perspective<float>(s.coneAngle, 1.0f, 1.0f, s.range);
 		glm::mat4 depthViewMatrix = glm::lookAt(s.position, s.position + s.direction, glm::vec3(0, 1, 0));
 

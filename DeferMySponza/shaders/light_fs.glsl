@@ -49,6 +49,9 @@ vec3 Normal;
 vec2 TextureCoordinate;
 int MaterialID;
 
+int shadowScale = 1024;
+float shadowBias = -0.01f;
+
 void getShine(vec3 lightDirection, inout float specular) {
 	vec3 H = normalize(lightDirection + eyeDirection);
 	float VH = max(dot(eyeDirection, H), 0);
@@ -108,7 +111,7 @@ subroutine(LightType) vec3 Spot(Light l) {
 
 		vec4 ShadowPos = fixed_projection * vec4(WorldPosition, 1);
 		vec3 Shadow = ShadowPos.xyz / ShadowPos.w;
-		float vis = (texture(shadowMap[fixed_instance], Shadow.xy * 1024).r < Shadow.z - 0.01f) ? 0.0f : 1.0f;
+		float vis = (texture(shadowMap[fixed_instance], Shadow.xy * shadowScale).r < Shadow.z + shadowBias) ? 0.0f : 1.0f;
 
 		return dAtt * cAtt * getInternal(dir, l.intensity) * vis;
 	}
