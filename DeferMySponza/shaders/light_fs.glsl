@@ -1,14 +1,16 @@
 #version 400
 
+#define PI 3.1415926535897932384626433832795
+
 struct Material {
 	vec3 diffuse;
 	float shine;
 	vec3 specular;
 	float metallic;
 
+	float rough;
 	int mainTexture;
 	int normalTexture;
-	int excess1;
 	int excess2;
 };
 
@@ -67,7 +69,7 @@ void getMetallic(inout float diffuse, inout float specular) {
 	diffuse *= (1 - met);
 }
 
-vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
+/*vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 	float diffuse = clamp(dot(Normal, lightDirection), 0, 1);
 	if (diffuse > 0) {
 		vec3 dir = normalize(eyePosition - WorldPosition);
@@ -81,6 +83,31 @@ vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
 		return vec3(diffuse + specular) * Colour * lightIntensity;
 	}
 	return vec3(0);
+}*/
+
+float getDiffuse(vec3 lightDirection) {
+	vec3 L = normalize(lightDirection);
+	vec3 V = normalize(eyeDirection);
+	vec3 H = normalize(lightDirection + eyeDirection);
+
+	float cosL = dot(L, Normal);
+	float cosV = dot(V, Normal);
+	float cosH = dot(H, Normal);
+	float cosD = dot(L, H);
+	
+	float FL = pow((1- cosL), 5);
+	float FV = pow((1- cosV), 5);
+	float R = 2 * material[MaterialID].rough * cosD * cosD;
+
+	float RetroReflect = R * (FL + FV + (FL * FV * (R - 1)));
+	float Diffuse = (1 - 0.5f * FL) * (1 - 0.5f * FV) + RetroReflect;
+	Diffuse /= PI;
+
+	return Diffuse;
+}
+
+vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
+		return getDiffuse(lightDirection) * Colour * lightIntensity;
 }
 
 subroutine(LightType) vec3 Directional(Light l) {

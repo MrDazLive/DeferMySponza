@@ -54,6 +54,14 @@ void Material::setMetallic(float m)
 	metallic = m;
 }
 
+float Material::getRoughness() const {
+	return roughness;
+}
+
+void Material::setRoughness(float r) {
+	roughness = r;
+}
+
 int Material::getMainTextureId() const {
 	return main_texture_id;
 }

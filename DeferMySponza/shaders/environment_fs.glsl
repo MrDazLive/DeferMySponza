@@ -6,9 +6,9 @@ struct Material {
 	vec3 specular;
 	float metalic;
 
+	float rough;
 	int mainTexture;
 	int normalTexture;
-	int excess1;
 	int excess2;
 };
 

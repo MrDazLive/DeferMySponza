@@ -25,6 +25,9 @@ public:
 	float getMetallic() const;
 	void setMetallic(float m);
 
+	float getRoughness() const;
+	void setRoughness(float r);
+
 	int getMainTextureId() const;
 	void setMainTextureId(int t);
 
@@ -36,14 +39,14 @@ public:
 
 private:
     Vector3 diffuse_colour;
-    float shininess;
+    float shininess{ 0.0f };
     Vector3 specular_colour;
 	float metallic{ 0.0f };
 
+	float roughness{ 0.0f };
 	int main_texture_id{ 128 };
 	unsigned int normal_texture_id{ 128 };
     MaterialId id;
-	int pad{ 128 };
 
 };
 
