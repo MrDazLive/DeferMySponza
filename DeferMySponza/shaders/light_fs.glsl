@@ -108,9 +108,22 @@ float getDiffuse(vec3 lightDirection) {
 }
 
 float getSpecular(vec3 lightDirection) {
-	vec3 dir = normalize(eyePosition - WorldPosition);
-	vec3 ref = normalize(reflect(lightDirection, Normal));
-	float Specular = max(dot(dir, ref), 0);
+	vec3 L = normalize(lightDirection);
+	vec3 V = normalize(eyeDirection);
+	vec3 H = normalize(lightDirection + eyeDirection);
+	
+	float cosL = max(dot(L, Normal), 0);
+	float cosV = max(dot(V, Normal), 0);
+	float cosH = max(dot(H, Normal), 0);
+	float cosE = max(dot(V, H), 0);
+
+	float F = pow((1 - cosE), 5);
+	float G = min(1, min(2*cosH*cosV/cosE, 2*cosH*cosL/cosE));
+	float D = 1.0f;//exp((cosH * cosH - 1) / (material[MaterialID].rough * material[MaterialID].rough * cosH * cosH)) / (4 * material[MaterialID].rough * material[MaterialID].rough * cosH * cosH);
+
+	float B = 1.0f;//PI * cosL * cosV;
+
+	float Specular = F * G * D / B;
 
 	return Specular;
 }
