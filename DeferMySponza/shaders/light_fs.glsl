@@ -51,8 +51,9 @@ vec3 Normal;
 vec2 TextureCoordinate;
 int MaterialID;
 
-int shadowScale = 1024;
-float shadowBias = -0.01f;
+const int attenuation = 10;
+const int shadowScale = 1024;
+const float shadowBias = -0.01f;
 
 void getShine(vec3 lightDirection, inout float specular) {
 	vec3 H = normalize(lightDirection + eyeDirection);
@@ -90,10 +91,10 @@ float getDiffuse(vec3 lightDirection) {
 	vec3 V = normalize(eyeDirection);
 	vec3 H = normalize(lightDirection + eyeDirection);
 
-	float cosL = dot(L, Normal);
-	float cosV = dot(V, Normal);
-	float cosH = dot(H, Normal);
-	float cosD = dot(L, H);
+	float cosL = max(dot(L, Normal), 0);
+	float cosV = max(dot(V, Normal), 0);
+	float cosH = max(dot(H, Normal), 0);
+	float cosD = max(dot(L, H), 0);
 	
 	float FL = pow((1- cosL), 5);
 	float FV = pow((1- cosV), 5);
@@ -106,8 +107,25 @@ float getDiffuse(vec3 lightDirection) {
 	return Diffuse;
 }
 
+float getSpecular(vec3 lightDirection) {
+	vec3 dir = normalize(eyePosition - WorldPosition);
+	vec3 ref = normalize(reflect(lightDirection, Normal));
+	float Specular = max(dot(dir, ref), 0);
+
+	return Specular;
+}
+
 vec3 getInternal(vec3 lightDirection, vec3 lightIntensity) {
-		return getDiffuse(lightDirection) * Colour * lightIntensity;
+	if(dot(Normal, lightDirection) > 0) {
+		float D = getDiffuse(lightDirection);
+		float S = getSpecular(lightDirection);
+		
+		getShine(lightDirection, S);
+		getMetallic(D, S);
+
+		return (D + S) * Colour * lightIntensity;
+	}
+	return vec3(0);
 }
 
 subroutine(LightType) vec3 Directional(Light l) {
@@ -119,7 +137,7 @@ subroutine(LightType) vec3 Point(Light l) {
 	float dis = length(dir);
 	dir = normalize(dir);
 
-	float att = l.range * l.range / (dis * dis * dis);
+	float att = l.range * l.range / (dis * dis * attenuation);
 
 	return att * getInternal(dir, l.intensity);
 }
@@ -133,7 +151,7 @@ subroutine(LightType) vec3 Spot(Light l) {
 	float ang = cos(l.coneAngle / 2);
 
 	if (fac > ang) {
-		float dAtt = l.range * l.range / (dis * dis * dis);
+		float dAtt = l.range * l.range / (dis * dis * attenuation);
 		float cAtt = 1 - ((1 - fac) / (1 - ang));
 
 		vec4 ShadowPos = fixed_projection * vec4(WorldPosition, 1);
