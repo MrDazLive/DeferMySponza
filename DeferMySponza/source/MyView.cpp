@@ -141,11 +141,11 @@ void MyView::windowViewDidReset(tygra::Window * window,
 	projection_transform = glm::perspective(1.31f, aspect_ratio, 1.f, 1000.f);
 
 	m_dbuffer->Buffer(GL_DEPTH24_STENCIL8, width, height, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
-	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
-	m_lBuffer->Buffer(GL_RGB32F, width, height, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB16F, width, height, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB16F, width, height, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB16F, width, height, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB16F, width, height, GL_RGB, GL_FLOAT);
+	m_lBuffer->Buffer(GL_RGB16F, width, height, GL_RGB, GL_FLOAT);
 	m_antiAliasing->setTextureSize(width, height);
 }
 
@@ -473,7 +473,7 @@ void MyView::PrepareTextures() {
 	m_lightProgram->SetActive();
 	for (int i = 0; i < 5; i++) {
 		m_shadowTexture[i] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
-		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 256, 256, GL_DEPTH_COMPONENT, GL_FLOAT);
+		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 4096, 4096, GL_DEPTH_COMPONENT, GL_FLOAT);
 
 		m_sFbo->AttachTexture(m_shadowTexture[i].get(), false);
 		m_sFbo->SetDraw();
@@ -497,19 +497,19 @@ void MyView::PrepareGBs() {
 	m_gFbo->AttachTexture(m_dbuffer.get(), false);
 
 	m_gBuffer[GBuffer::Colour] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
-	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Colour]->Buffer(GL_RGB16F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Colour].get());
 
 	m_gBuffer[GBuffer::Position] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT1);
-	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Position]->Buffer(GL_RGB16F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Position].get());
 
 	m_gBuffer[GBuffer::Normal] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT2);
-	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Normal]->Buffer(GL_RGB16F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Normal].get());
 
 	m_gBuffer[GBuffer::Material] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT3);
-	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_gBuffer[GBuffer::Material]->Buffer(GL_RGB16F, 0, 0, GL_RGB, GL_FLOAT);
 	m_gFbo->AttachTexture(m_gBuffer[GBuffer::Material].get());
 
 	m_lFbo = std::make_unique<FrameBufferObject>();
@@ -517,7 +517,7 @@ void MyView::PrepareGBs() {
 	m_lFbo->AttachTexture(m_dbuffer.get(), false);
 
 	m_lBuffer = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_COLOR_ATTACHMENT0);
-	m_lBuffer->Buffer(GL_RGB32F, 0, 0, GL_RGB, GL_FLOAT);
+	m_lBuffer->Buffer(GL_RGB16F, 0, 0, GL_RGB, GL_FLOAT);
 	m_lFbo->AttachTexture(m_lBuffer.get());
 
 	m_sFbo = std::make_unique<FrameBufferObject>();
@@ -672,7 +672,7 @@ void MyView::DrawEnvironment() {
 void MyView::DrawShadows(bool drawStatic) {
 	m_queryShadowRender->Begin();
 
-	glViewport(0, 0, 256, 256);
+	glViewport(0, 0, 4096, 4096);
 
 	for (int i = 0; i < 5; i++) {
 		auto &light = scene_->getAllSpotLights()[i];

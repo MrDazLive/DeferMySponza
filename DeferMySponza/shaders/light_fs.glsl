@@ -51,9 +51,9 @@ vec3 Normal;
 vec2 TextureCoordinate;
 int MaterialID;
 
-const int attenuation = 10;
-const int shadowScale = 256;
-const float shadowBias = -0.001f;
+const int attenuation = 16;
+const int shadowScale = 4096;
+const float shadowBias = -0.005f;
 
 void getShine(vec3 lightDirection, inout float specular) {
 	vec3 H = normalize(lightDirection + eyeDirection);
@@ -117,9 +117,12 @@ float getSpecular(vec3 lightDirection) {
 	float cosH = max(dot(H, Normal), 0);
 	float cosE = max(dot(V, H), 0);
 
+	vec3 dir = normalize(eyePosition - WorldPosition);
+	vec3 ref = normalize(reflect(lightDirection, Normal));
+
 	float F = pow((1 - cosE), 5);
 	float G = min(1, min(2*cosH*cosV/cosE, 2*cosH*cosL/cosE));
-	float D = 1.0f;//exp((cosH * cosH - 1) / (material[MaterialID].rough * material[MaterialID].rough * cosH * cosH)) / (4 * material[MaterialID].rough * material[MaterialID].rough * cosH * cosH);
+	float D = max(dot(dir, ref), 0);//exp((cosH * cosH - 1) / (material[MaterialID].rough * material[MaterialID].rough * cosH * cosH)) / (4 * material[MaterialID].rough * material[MaterialID].rough * cosH * cosH);
 
 	float B = 1.0f;//PI * cosL * cosV;
 
