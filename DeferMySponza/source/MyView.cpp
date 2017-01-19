@@ -175,16 +175,18 @@ void MyView::windowViewRender(tygra::Window * window) {
 #pragma region Additional Methods
 
 void MyView::LogTimers() {
-	std::cout << "Forward Rendering: (" << m_queryForwardRender->toString() << ")" << std::endl;
-	std::cout << "Deferred Rendering: (" << m_queryDeferredRender->toString() << ")" << std::endl;
-	std::cout << "Post Processing: (" << m_queryPostProcessing->toString() << ")" << std::endl;
+	std::cout << "Environment Rendering: (" << m_queryEnvironmentRender->toString() << ")" << std::endl;
+	std::cout << "Shadow Mapping: (" << m_queryShadowRender->toString() << ")" << std::endl;
+	std::cout << "Light Rendering: (" << m_queryLightRender->toString() << ")" << std::endl;
+	std::cout << "Post Processing: (" << m_queryPostRender->toString() << ")" << std::endl;
 	std::cout << std::endl;
 }
 
 void MyView::ResetTimers() {
-	m_queryForwardRender->Reset();
-	m_queryDeferredRender->Reset();
-	m_queryPostProcessing->Reset();
+	m_queryEnvironmentRender->Reset();
+	m_queryShadowRender->Reset();
+	m_queryLightRender->Reset();
+	m_queryPostRender->Reset();
 }
 
 void MyView::TogglePostProcessing() {
@@ -355,9 +357,10 @@ void MyView::PrepareUBOs() {
 }
 
 void MyView::PrepareTimers() {
-	m_queryForwardRender = std::make_unique<TimeQuery>();
-	m_queryDeferredRender = std::make_unique<TimeQuery>();
-	m_queryPostProcessing = std::make_unique<TimeQuery>();
+	m_queryEnvironmentRender = std::make_unique<TimeQuery>();
+	m_queryShadowRender = std::make_unique<TimeQuery>();
+	m_queryLightRender = std::make_unique<TimeQuery>();
+	m_queryPostRender = std::make_unique<TimeQuery>();
 }
 
 void MyView::PrepareShaders() {
@@ -470,7 +473,7 @@ void MyView::PrepareTextures() {
 	m_lightProgram->SetActive();
 	for (int i = 0; i < 5; i++) {
 		m_shadowTexture[i] = std::make_unique<Texture>(GL_TEXTURE_RECTANGLE, GL_DEPTH_ATTACHMENT);
-		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 1024, 1024, GL_DEPTH_COMPONENT, GL_FLOAT);
+		m_shadowTexture[i]->Buffer(GL_DEPTH_COMPONENT16, 256, 256, GL_DEPTH_COMPONENT, GL_FLOAT);
 
 		m_sFbo->AttachTexture(m_shadowTexture[i].get(), false);
 		m_sFbo->SetDraw();
@@ -582,20 +585,14 @@ void MyView::PrepareVertexData(Indirect &indirect, std::vector<Vertex> &vertices
 #pragma region Render Methods
 
 void MyView::ForwardRender() {
-	m_queryForwardRender->Begin();
-
 	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
 	DrawEnvironment();
-
-	m_queryForwardRender->End();
 }
 
 void MyView::DeferredRender() {
-	m_queryDeferredRender->Begin();
-
 	m_gFbo->SetActive();
 
 	glDepthMask(GL_TRUE);
@@ -630,12 +627,10 @@ void MyView::DeferredRender() {
 	m_lFbo->BlitTexture(m_lBuffer.get(), screen_width, screen_height);
 
 	FrameBufferObject::Reset();
-
-	m_queryDeferredRender->End();
 }
 
 void MyView::PostProcessRender() {
-	m_queryPostProcessing->Begin();
+	m_queryPostRender->Begin();
 	
 	switch (m_postMode) {
 		case PostProcess::Anti_Aliasing:
@@ -648,10 +643,12 @@ void MyView::PostProcessRender() {
 
 	m_lFbo->BlitTexture(m_lBuffer.get(), screen_width, screen_height);
 
-	m_queryPostProcessing->End();
+	m_queryPostRender->End();
 }
 
 void MyView::DrawEnvironment() {
+	m_queryEnvironmentRender->Begin();
+
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_environmentProgram->SetActive();
@@ -668,10 +665,14 @@ void MyView::DrawEnvironment() {
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, m_nonStaticMeshes->count, sizeof(Mesh));
 
 	VertexArrayObject::Reset();
+
+	m_queryEnvironmentRender->End();
 }
 
 void MyView::DrawShadows(bool drawStatic) {
-	glViewport(0, 0, 1024, 1024);
+	m_queryShadowRender->Begin();
+
+	glViewport(0, 0, 256, 256);
 
 	for (int i = 0; i < 5; i++) {
 		auto &light = scene_->getAllSpotLights()[i];
@@ -719,9 +720,13 @@ void MyView::DrawShadows(bool drawStatic) {
 
 	glViewport(0, 0, screen_width, screen_height);
 	VertexArrayObject::Reset();
+
+	m_queryShadowRender->End();
 }
 
 void MyView::DrawLights() {
+	m_queryLightRender->Begin();
+
 	glm::mat4 combined_transform = projection_transform * view_transform;
 
 	m_lightProgram->SetActive();
@@ -755,6 +760,8 @@ void MyView::DrawLights() {
 	glDepthFunc(GL_LEQUAL);
 
 	VertexArrayObject::Reset();
+
+	m_queryLightRender->End();
 }
 
 #pragma endregion

@@ -52,8 +52,8 @@ vec2 TextureCoordinate;
 int MaterialID;
 
 const int attenuation = 10;
-const int shadowScale = 1024;
-const float shadowBias = -0.01f;
+const int shadowScale = 256;
+const float shadowBias = -0.001f;
 
 void getShine(vec3 lightDirection, inout float specular) {
 	vec3 H = normalize(lightDirection + eyeDirection);

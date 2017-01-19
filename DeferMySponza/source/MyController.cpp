@@ -132,6 +132,31 @@ void MyController::windowControlKeyboardChanged(tygra::Window * window,
 	case tygra::kWindowKeyPad3:
 		view_->TogglePostProcessing();
 		break;
+
+	case tygra::kWindowKeyF9:
+	{
+		scene::Vector3 pos = scene_->getCamera().getPosition();
+		scene::Vector3 dir = scene_->getCamera().getDirection();
+		std::cout << pos.x << ":" << pos.y << ":" << pos.z << "" << std::endl;
+		std::cout << dir.x << ":" << dir.y << ":" << dir.z << "" << std::endl;
+	}
+		break;
+	case tygra::kWindowKeyF5:
+		scene_->getCamera().setPosition(scene::Vector3(83.5f, 59.1f, -19.2f));
+		scene_->getCamera().setDirection(scene::Vector3(-0.78f, -0.54f, 0.32f));
+		break;
+	case tygra::kWindowKeyF6:
+		scene_->getCamera().setPosition(scene::Vector3(-90.5f, 160.8f, 0.0f));
+		scene_->getCamera().setDirection(scene::Vector3(0.56f, -0.83f, 0.00f));
+		break;
+	case tygra::kWindowKeyF7:
+		scene_->getCamera().setPosition(scene::Vector3(125.2f, 32.1f, -60.8f));
+		scene_->getCamera().setDirection(scene::Vector3(-0.68f, -0.34f, 0.65f));
+		break;
+	case tygra::kWindowKeyF8:
+		scene_->getCamera().setPosition(scene::Vector3(0.0f, 200.0f, 0.0f));
+		scene_->getCamera().setDirection(scene::Vector3(0.00f, 1.0f, 0.00f));
+		break;
     }
 }
 

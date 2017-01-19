@@ -57,7 +57,7 @@ private:
 		glm::mat4 view_transform;
 		glm::mat4 projection_transform;
 
-		PostProcess m_postMode{ PostProcess::Off };
+		PostProcess m_postMode{ PostProcess::Anti_Aliasing };
 		Mode m_renderMode{ Mode::Deferred };
 	#pragma endregion
 	#pragma region Geometry Objects
@@ -112,9 +112,10 @@ private:
 		std::unique_ptr<PostProcessing> m_celShading;
 	#pragma endregion
 	#pragma region Time Queries
-		std::unique_ptr<TimeQuery> m_queryForwardRender;
-		std::unique_ptr<TimeQuery> m_queryDeferredRender;
-		std::unique_ptr<TimeQuery> m_queryPostProcessing;
+		std::unique_ptr<TimeQuery> m_queryEnvironmentRender;
+		std::unique_ptr<TimeQuery> m_queryShadowRender;
+		std::unique_ptr<TimeQuery> m_queryLightRender;
+		std::unique_ptr<TimeQuery> m_queryPostRender;
 	#pragma endregion
 #pragma endregion
 #pragma region Window Methods
